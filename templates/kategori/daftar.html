@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-6">
+        <h2>Kategori Arsip</h2>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'arsip:kategori_tambah' %}" class="btn btn-primary">+ Tambah Kategori</a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="mb-3">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Cari kategori..." value="{{ query }}">
+                <button class="btn btn-outline-secondary" type="submit">Cari</button>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Status</th>
+                        <th>Google Drive</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in kategori_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.nama }}</td>
+                        <td>
+                            {% if item.aktif %}
+                                <span class="badge bg-success">Aktif</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Nonaktif</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.drive_folder_id %}
+                                {{ item.drive_folder_id }}
+                            {% else %}
+                                <span class="text-muted">Belum terhubung</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
+                            <form action="{% url 'arsip:kategori_toggle' item.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-{% if item.aktif %}danger{% else %}success{% endif %}">
+                                    {% if item.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">Belum ada data kategori.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

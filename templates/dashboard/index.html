@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h2>SISTEM ARSIP DESA</h2>
+    <p class="lead">Selamat datang, {{ request.user.username }}</p>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Arsip</h5>
+                <h2 class="display-5">{{ total_arsip }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Kategori</h5>
+                <h2 class="display-5">{{ total_kategori }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white shadow h-100">
+            <div class="card-body">
+                <h5 class="card-title">Kategori Aktif</h5>
+                <h2 class="display-5">{{ kategori_aktif }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white shadow h-100">
+            <div class="card-body">
+                <h5 class="card-title">Kategori Nonaktif</h5>
+                <h2 class="display-5">{{ kategori_nonaktif }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Arsip Terbaru</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Warga</th>
+                        <th>NIK</th>
+                        <th>Kategori</th>
+                        <th>Nama File</th>
+                        <th>Tanggal Upload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in arsip_terbaru %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.nama_warga }}</td>
+                        <td>{{ item.nik }}</td>
+                        <td>{{ item.kategori.nama }}</td>
+                        <td>{{ item.nama_file }}</td>
+                        <td>{{ item.tanggal_upload|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">Belum ada arsip terbaru.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

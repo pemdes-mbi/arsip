@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Detail Arsip</h4>
+                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-sm btn-secondary">Kembali</a>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th width="30%">Nama Warga</th>
+                            <td>{{ arsip.nama_warga }}</td>
+                        </tr>
+                        <tr>
+                            <th>NIK</th>
+                            <td>{{ arsip.nik }}</td>
+                        </tr>
+                        <tr>
+                            <th>Kategori</th>
+                            <td>{{ arsip.kategori.nama }}</td>
+                        </tr>
+                        <tr>
+                            <th>File Dokumen</th>
+                            <td>
+                                {% if arsip.file %}
+                                    <a href="{{ arsip.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat / Buka File</a>
+                                {% else %}
+                                    <span class="text-muted">File belum tersedia.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Nama File</th>
+                            <td>{{ arsip.nama_file }}</td>
+                        </tr>
+                        <tr>
+                            <th>Keterangan</th>
+                            <td>{{ arsip.keterangan|default:"-"|linebreaks }}</td>
+                        </tr>
+                        <tr>
+                            <th>Diunggah oleh</th>
+                            <td>{{ arsip.uploaded_by|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Tanggal Upload</th>
+                            <td>{{ arsip.tanggal_upload|date:"d F Y H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Google Drive File</th>
+                            <td>
+                                {% if arsip.drive_file_id %}
+                                    <a href="https://drive.google.com/file/d/{{ arsip.drive_file_id }}/view" target="_blank" class="btn btn-sm btn-outline-success">Buka di Google Drive</a>
+                                {% else %}
+                                    <span class="text-muted">File Google Drive belum tersedia.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="mt-4 mb-4">
+                    <h5>Preview File</h5>
+                    {% if not arsip.file %}
+                        <div class="alert alert-warning mb-0">File lokal tidak tersedia untuk preview.</div>
+                    {% else %}
+                        {% if file_type == 'image' %}
+                            <div class="text-center">
+                                <img src="{{ arsip.file.url }}" class="img-fluid rounded border shadow-sm" alt="Preview Gambar" style="max-height: 600px;">
+                            </div>
+                        {% elif file_type == 'pdf' %}
+                            <div class="ratio ratio-4x3 border rounded shadow-sm">
+                                <iframe src="{{ arsip.file.url }}" title="PDF Preview" allowfullscreen></iframe>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary mb-0">Preview tidak tersedia untuk jenis file ini.</div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'arsip:arsip_edit' arsip.id %}" class="btn btn-warning">Edit Data</a>
+                    <form action="{% url 'arsip:arsip_hapus' arsip.id %}" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Hapus</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4 class="mb-0">Tambah Arsip</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nama_warga.id_for_label }}" class="form-label">Nama Warga</label>
+                            {{ form.nama_warga }}
+                            {% if form.nama_warga.errors %}
+                                <div class="text-danger small mt-1">{{ form.nama_warga.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.nik.id_for_label }}" class="form-label">NIK</label>
+                            {{ form.nik }}
+                            {% if form.nik.errors %}
+                                <div class="text-danger small mt-1">{{ form.nik.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.kategori.id_for_label }}" class="form-label">Kategori</label>
+                        {{ form.kategori }}
+                        {% if form.kategori.errors %}
+                            <div class="text-danger small mt-1">{{ form.kategori.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.nama_file.id_for_label }}" class="form-label">Nama File</label>
+                        {{ form.nama_file }}
+                        {% if form.nama_file.errors %}
+                            <div class="text-danger small mt-1">{{ form.nama_file.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label">File Dokumen</label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="text-danger small mt-1">{{ form.file.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.keterangan.id_for_label }}" class="form-label">Keterangan</label>
+                        {{ form.keterangan }}
+                        {% if form.keterangan.errors %}
+                            <div class="text-danger small mt-1">{{ form.keterangan.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'arsip:arsip_list' %}" class="btn btn-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
