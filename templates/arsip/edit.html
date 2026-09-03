@@ -58,9 +58,8 @@
                                 <a href="{{ arsip.file.url }}" target="_blank">Lihat File Saat Ini: {{ arsip.file.name }}</a>
                             </div>
                         {% endif %}
-                        <div class="mb-3 d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary flex-fill" id="btn_mode_foto" onclick="modeFoto()">📷 AMBIL GAMBAR</button>
-                            <button type="button" class="btn btn-outline-secondary flex-fill" id="btn_mode_file" onclick="modeFile()">📁 PILIH FILE</button>
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-outline-primary w-100 py-3 fw-bold" id="btn_mode_foto" onclick="modeFoto()">📷 AMBIL GAMBAR</button>
                         </div>
                         
                         <!-- CAMERA UI CONTAINER -->
@@ -77,6 +76,7 @@
                             
                             <div id="camera_controls">
                                 <button type="button" id="btn_capture" class="btn btn-primary" onclick="capturePhoto()">📸 Ambil Foto</button>
+                                <button type="button" class="btn btn-outline-danger ms-2" onclick="closeCamera()">Batal</button>
                             </div>
                             <div id="preview_controls" style="display:none;">
                                 <button type="button" class="btn btn-secondary me-2" onclick="retakePhoto()">🔄 Foto Ulang</button>
@@ -85,9 +85,9 @@
                         </div>
 
                         <!-- DEFAULT FILE INPUT -->
-                        <div id="default_file_container" style="display:none;" class="mb-3 border rounded p-3 bg-light">
+                        <div id="default_file_container" class="mb-3 border rounded p-3 bg-light">
                             {{ form.file }}
-                            <small class="form-text text-muted d-block mt-2" id="help_text_arsip">Format yang didukung: JPG, PNG, PDF, DOCX, XLSX, CSV (Maks 10MB). Biarkan kosong jika tidak ingin mengubah file.</small>
+                            <small class="form-text text-muted d-block mt-2" id="help_text_arsip">Format yang didukung: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX, CSV (Maks 10MB). Biarkan kosong jika tidak ingin mengubah file.</small>
                         </div>
                         
                         {% if form.file.errors %}
@@ -179,6 +179,21 @@ function retakePhoto() {
     document.getElementById('preview_controls').style.display = 'none';
 }
 
+function modeFoto() {
+    const realInput = document.getElementById('{{ form.file.id_for_label }}');
+    
+    document.getElementById('camera_container').style.display = 'block';
+    document.getElementById('btn_mode_foto').classList.replace('btn-outline-primary', 'btn-primary');
+    
+    startCamera();
+}
+
+function closeCamera() {
+    stopCamera();
+    document.getElementById('camera_container').style.display = 'none';
+    document.getElementById('btn_mode_foto').classList.replace('btn-primary', 'btn-outline-primary');
+}
+
 function usePhoto() {
     const canvas = document.getElementById('camera_canvas');
     canvas.toBlob(function(blob) {
@@ -189,55 +204,17 @@ function usePhoto() {
         const realInput = document.getElementById('{{ form.file.id_for_label }}');
         realInput.files = dt.files;
         
-        alert("Foto berhasil dipilih. Silakan klik Simpan.");
+        alert("Foto berhasil digunakan. Silakan klik Simpan.");
+        closeCamera();
     }, 'image/jpeg', 0.9);
 }
 
-function handleFallback(input) {
-    if (input.files && input.files.length > 0) {
-        const dt = new DataTransfer();
-        dt.items.add(input.files[0]);
-        const realInput = document.getElementById('{{ form.file.id_for_label }}');
-        realInput.files = dt.files;
-    }
-}
-
-function modeFoto() {
-    const realInput = document.getElementById('{{ form.file.id_for_label }}');
-    realInput.setAttribute('accept', '.jpg,.jpeg,.png,image/*');
-    
-    document.getElementById('default_file_container').style.display = 'none';
-    document.getElementById('camera_container').style.display = 'block';
-    
-    // Update active button styling
-    document.getElementById('btn_mode_foto').classList.replace('btn-outline-primary', 'btn-primary');
-    document.getElementById('btn_mode_file').classList.replace('btn-secondary', 'btn-outline-secondary');
-    
-    startCamera();
-}
-
-function modeFile() {
-    stopCamera();
-    
-    const realInput = document.getElementById('{{ form.file.id_for_label }}');
-    realInput.setAttribute('accept', '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv');
-    
-    document.getElementById('camera_container').style.display = 'none';
-    document.getElementById('default_file_container').style.display = 'block';
-    
-    // Update active button styling
-    document.getElementById('btn_mode_file').classList.replace('btn-outline-secondary', 'btn-secondary');
-    document.getElementById('btn_mode_foto').classList.replace('btn-primary', 'btn-outline-primary');
-    
-    // Trigger file picker
-    realInput.click();
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    // Buttons are in neutral state, containers are hidden (display:none)
+    // Make sure the default file input is visible and accepting all formats
     const realInput = document.getElementById('{{ form.file.id_for_label }}');
     if (realInput) {
         realInput.style.display = 'block';
+        realInput.setAttribute('accept', '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv');
     }
 });
 </script>
