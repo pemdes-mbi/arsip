@@ -52,13 +52,22 @@ allowed_hosts_env = os.environ.get('DJANGO_ALLOWED_HOSTS')
 if allowed_hosts_env and allowed_hosts_env.strip():
     ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 else:
-    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '.vercel.app', '*']
+    ALLOWED_HOSTS = ['*']
+
+# Always permit Vercel domains and local dev environments
+if '*' not in ALLOWED_HOSTS:
+    for h in ['.vercel.app', '.now.sh', '127.0.0.1', 'localhost']:
+        if h not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(h)
 
 csrf_trusted = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS')
 if csrf_trusted and csrf_trusted.strip():
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_trusted.split(',') if origin.strip()]
 else:
     CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
+
+if 'https://*.vercel.app' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.vercel.app')
 
 SESSION_COOKIE_SECURE = get_env_bool('DJANGO_SESSION_COOKIE_SECURE', False)
 CSRF_COOKIE_SECURE = get_env_bool('DJANGO_CSRF_COOKIE_SECURE', False)
