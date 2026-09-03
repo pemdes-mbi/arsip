@@ -18,13 +18,13 @@
                 <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'arsip:dashboard' %}">Dashboard</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'arsip:dashboard' %}">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'arsip:arsip_list' %}">Arsip</a>
+                        <a class="nav-link {% if 'arsip_list' in request.resolver_match.url_name or 'arsip_tambah' in request.resolver_match.url_name or 'arsip_detail' in request.resolver_match.url_name or 'arsip_edit' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:arsip_list' %}">Arsip</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'arsip:kategori_list' %}">Kategori</a>
+                        <a class="nav-link {% if 'kategori' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:kategori_list' %}">Kategori</a>
                     </li>
                     {% endif %}
                 </ul>

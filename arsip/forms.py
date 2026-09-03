@@ -46,9 +46,9 @@ class ArsipForm(forms.ModelForm):
         file = self.cleaned_data.get('file')
         if file:
             ext = os.path.splitext(file.name)[1].lower()
-            valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf']
+            valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']
             if ext not in valid_extensions:
-                raise ValidationError('Hanya file JPG, JPEG, PNG, atau PDF yang diperbolehkan.')
+                raise ValidationError('Hanya file gambar (JPG/PNG) atau dokumen (PDF/Word/Excel/CSV) yang diperbolehkan.')
             if file.size > 10 * 1024 * 1024: # 10MB
                 raise ValidationError('Ukuran file maksimal adalah 10MB.')
         return file

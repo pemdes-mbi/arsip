@@ -52,8 +52,39 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.file.id_for_label }}" class="form-label">File Dokumen</label>
-                        {{ form.file }}
+                        <label class="form-label fw-bold">Upload Arsip</label>
+                        <div class="mb-3 d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary flex-fill" id="btn_mode_foto" onclick="modeFoto()">📷 AMBIL GAMBAR</button>
+                            <button type="button" class="btn btn-outline-secondary flex-fill" id="btn_mode_file" onclick="modeFile()">📁 PILIH FILE</button>
+                        </div>
+                        
+                        <!-- CAMERA UI CONTAINER -->
+                        <div id="camera_container" class="mb-3 border rounded p-3 bg-light text-center" style="display:none;">
+                            <h5 class="mb-3">📷 Ambil Foto</h5>
+                            
+                            <video id="camera_video" class="w-100 bg-black rounded mb-2" autoplay playsinline style="max-height: 400px; object-fit: contain;"></video>
+                            <canvas id="camera_canvas" style="display:none;"></canvas>
+                            <img id="camera_preview" class="w-100 rounded mb-2" style="display:none; max-height: 400px; object-fit: contain;">
+                            
+                            <div id="camera_error" class="alert alert-warning small text-start" style="display:none;">
+                                Kamera tidak dapat digunakan. Silakan izinkan akses kamera atau pilih foto dari perangkat.
+                            </div>
+                            
+                            <div id="camera_controls">
+                                <button type="button" id="btn_capture" class="btn btn-primary" onclick="capturePhoto()">📸 Ambil Foto</button>
+                            </div>
+                            <div id="preview_controls" style="display:none;">
+                                <button type="button" class="btn btn-secondary me-2" onclick="retakePhoto()">🔄 Foto Ulang</button>
+                                <button type="button" class="btn btn-success" onclick="usePhoto()">✅ Gunakan Foto</button>
+                            </div>
+                        </div>
+
+                        <!-- DEFAULT FILE INPUT -->
+                        <div id="default_file_container" style="display:none;" class="mb-3 border rounded p-3 bg-light">
+                            {{ form.file }}
+                            <small class="form-text text-muted d-block mt-2" id="help_text_arsip">Format yang didukung: JPG, PNG, PDF, DOCX, XLSX, CSV (Maks 10MB)</small>
+                        </div>
+                        
                         {% if form.file.errors %}
                             <div class="text-danger small mt-1">{{ form.file.errors|join:", " }}</div>
                         {% endif %}
@@ -76,4 +107,134 @@
         </div>
     </div>
 </div>
+<script>
+let stream = null;
+
+function startCamera() {
+    const video = document.getElementById('camera_video');
+    const errorMsg = document.getElementById('camera_error');
+    errorMsg.style.display = 'none';
+    
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } })
+            .then(function(s) {
+                stream = s;
+                video.srcObject = stream;
+                video.play();
+                video.style.display = 'block';
+                document.getElementById('camera_preview').style.display = 'none';
+                document.getElementById('camera_controls').style.display = 'block';
+                document.getElementById('preview_controls').style.display = 'none';
+            })
+            .catch(function(err) {
+                console.error("Camera error:", err);
+                errorMsg.style.display = 'block';
+                video.style.display = 'none';
+            });
+    } else {
+        errorMsg.style.display = 'block';
+        video.style.display = 'none';
+    }
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+}
+
+function capturePhoto() {
+    const video = document.getElementById('camera_video');
+    const canvas = document.getElementById('camera_canvas');
+    const preview = document.getElementById('camera_preview');
+    
+    if (!stream) return;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    preview.src = canvas.toDataURL('image/jpeg', 0.9);
+    
+    video.style.display = 'none';
+    preview.style.display = 'block';
+    document.getElementById('camera_controls').style.display = 'none';
+    document.getElementById('preview_controls').style.display = 'block';
+}
+
+function retakePhoto() {
+    const video = document.getElementById('camera_video');
+    const preview = document.getElementById('camera_preview');
+    
+    preview.style.display = 'none';
+    video.style.display = 'block';
+    document.getElementById('camera_controls').style.display = 'block';
+    document.getElementById('preview_controls').style.display = 'none';
+}
+
+function usePhoto() {
+    const canvas = document.getElementById('camera_canvas');
+    canvas.toBlob(function(blob) {
+        const file = new File([blob], "arsip_kamera_" + Date.now() + ".jpg", { type: "image/jpeg" });
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        
+        const realInput = document.getElementById('{{ form.file.id_for_label }}');
+        realInput.files = dt.files;
+        
+        alert("Foto berhasil dipilih. Silakan klik Simpan.");
+    }, 'image/jpeg', 0.9);
+}
+
+function handleFallback(input) {
+    if (input.files && input.files.length > 0) {
+        const dt = new DataTransfer();
+        dt.items.add(input.files[0]);
+        const realInput = document.getElementById('{{ form.file.id_for_label }}');
+        realInput.files = dt.files;
+    }
+}
+
+function modeFoto() {
+    const realInput = document.getElementById('{{ form.file.id_for_label }}');
+    realInput.setAttribute('accept', '.jpg,.jpeg,.png,image/*');
+    
+    document.getElementById('default_file_container').style.display = 'none';
+    document.getElementById('camera_container').style.display = 'block';
+    
+    // Update active button styling
+    document.getElementById('btn_mode_foto').classList.replace('btn-outline-primary', 'btn-primary');
+    document.getElementById('btn_mode_file').classList.replace('btn-secondary', 'btn-outline-secondary');
+    
+    startCamera();
+}
+
+function modeFile() {
+    stopCamera();
+    
+    const realInput = document.getElementById('{{ form.file.id_for_label }}');
+    realInput.setAttribute('accept', '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv');
+    
+    document.getElementById('camera_container').style.display = 'none';
+    document.getElementById('default_file_container').style.display = 'block';
+    
+    // Update active button styling
+    document.getElementById('btn_mode_file').classList.replace('btn-outline-secondary', 'btn-secondary');
+    document.getElementById('btn_mode_foto').classList.replace('btn-primary', 'btn-outline-primary');
+    
+    // Trigger file picker
+    realInput.click();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Buttons are in neutral state, containers are hidden (display:none)
+    const realInput = document.getElementById('{{ form.file.id_for_label }}');
+    if (realInput) {
+        realInput.style.display = 'block';
+    }
+});
+
+</script>
 {% endblock %}

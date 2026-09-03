@@ -63,17 +63,24 @@
                         <td>{{ item.nama_file }}</td>
                         <td>{{ item.tanggal_upload|date:"d/m/Y H:i" }}</td>
                         <td>
-                            <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-info text-white">Detail</a>
-                            <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
-                            <form action="{% url 'arsip:arsip_hapus' item.id %}" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
-                            </form>
+                            <div class="d-flex flex-column flex-lg-row gap-1">
+                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-info text-white">Detail</a>
+                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{% url 'arsip:arsip_hapus' item.id %}" method="post" class="d-inline m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger w-100">Hapus</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center">Tidak ada arsip yang ditemukan.</td>
+                        <td colspan="7" class="text-center">
+                            <div class="py-4 text-muted">
+                                <h5>Tidak ada arsip yang ditemukan.</h5>
+                                <p class="mb-0">Silakan ubah pencarian/filter atau tambah arsip baru.</p>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

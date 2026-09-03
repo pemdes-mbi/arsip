@@ -56,18 +56,24 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
-                            <form action="{% url 'arsip:kategori_toggle' item.id %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-sm btn-{% if item.aktif %}danger{% else %}success{% endif %}">
-                                    {% if item.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
-                                </button>
-                            </form>
+                            <div class="d-flex flex-column flex-lg-row gap-1">
+                                <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
+                                <form action="{% url 'arsip:kategori_toggle' item.id %}" method="post" class="d-inline m-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-{% if item.aktif %}danger{% else %}success{% endif %} w-100">
+                                        {% if item.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="text-center">Belum ada data kategori.</td>
+                        <td colspan="5" class="text-center">
+                            <div class="py-4 text-muted">
+                                <h5>Belum ada data kategori.</h5>
+                            </div>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

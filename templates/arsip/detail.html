@@ -4,9 +4,16 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card mt-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
                 <h4 class="mb-0">Detail Arsip</h4>
-                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-sm btn-secondary">Kembali</a>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'arsip:arsip_edit' arsip.id %}" class="btn btn-sm btn-warning">Edit Data</a>
+                    <form action="{% url 'arsip:arsip_hapus' arsip.id %}" method="post" class="d-inline m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                    </form>
+                    <a href="{% url 'arsip:arsip_list' %}" class="btn btn-sm btn-secondary">Kembali</a>
+                </div>
             </div>
             <div class="card-body">
                 <table class="table table-bordered">
@@ -81,13 +88,7 @@
                     {% endif %}
                 </div>
                 
-                <div class="mt-3">
-                    <a href="{% url 'arsip:arsip_edit' arsip.id %}" class="btn btn-warning">Edit Data</a>
-                    <form action="{% url 'arsip:arsip_hapus' arsip.id %}" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger">Hapus</button>
-                    </form>
-                </div>
+                <!-- Aksi dipindah ke header -->
             </div>
         </div>
     </div>
