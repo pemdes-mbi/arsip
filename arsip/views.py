@@ -471,7 +471,8 @@ def arsip_laporan(request):
 def arsip_export_csv(request):
     arsip_qs, _, _, _, _ = _get_arsip_filtered_qs(request)
     
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    now = timezone.localtime(timezone.now()) if getattr(settings, 'USE_TZ', False) else timezone.now()
+    timestamp = now.strftime('%Y%m%d_%H%M%S')
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="laporan_arsip_{timestamp}.csv"'
 
@@ -486,7 +487,12 @@ def arsip_export_csv(request):
     for idx, item in enumerate(arsip_qs, start=1):
         keterangan = item.keterangan if item.keterangan else ""
         uploaded_by = item.uploaded_by.username if item.uploaded_by else ""
-        tanggal_upload = item.tanggal_upload.strftime('%Y-%m-%d %H:%M:%S') if item.tanggal_upload else ""
+        
+        tanggal_upload = ""
+        if item.tanggal_upload:
+            local_dt = timezone.localtime(item.tanggal_upload) if getattr(settings, 'USE_TZ', False) else item.tanggal_upload
+            tanggal_upload = local_dt.strftime('%Y-%m-%d %H:%M:%S')
+            
         kategori_nama = item.kategori.nama if item.kategori else ""
         
         writer.writerow([
