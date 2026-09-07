@@ -45,12 +45,54 @@ class ArsipForm(forms.ModelForm):
     def clean_file(self):
         file = self.cleaned_data.get('file')
         if file:
-            ext = os.path.splitext(file.name)[1].lower()
+            # 1. Path traversal protection & normalize filename
+            basename = os.path.basename(file.name)
+            if '..' in basename or '/' in basename or '\\' in basename:
+                raise ValidationError('Nama file tidak valid (indikasi path traversal).')
+            
+            # 2. Extract and validate extension
+            # Ensure it captures the very last extension to prevent double extensions (e.g. file.pdf.exe)
+            ext = os.path.splitext(basename)[1].lower()
             valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']
+            
+            # Executable protection (also caught by valid_extensions but explicit is better)
+            invalid_extensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.py', '.js', '.dll', '.msi', '.scr']
+            if ext in invalid_extensions:
+                 raise ValidationError('File executable tidak diperbolehkan.')
+                 
             if ext not in valid_extensions:
                 raise ValidationError('Hanya file gambar (JPG/PNG) atau dokumen (PDF/Word/Excel/CSV) yang diperbolehkan.')
-            if file.size > 10 * 1024 * 1024: # 10MB
+            
+            # 3. File size validation (10MB limit)
+            if file.size > 10 * 1024 * 1024:
                 raise ValidationError('Ukuran file maksimal adalah 10MB.')
+                
+            # 4. Content / Signature validation (Magic Numbers)
+            # We don't blindly trust the content_type from the client.
+            # We check the first few bytes for common formats to prevent fake files.
+            try:
+                # Read first 8 bytes for signature checking
+                header = file.read(8)
+                file.seek(0) # Reset pointer so save/upload works later
+                
+                if ext == '.pdf' and not header.startswith(b'%PDF'):
+                    raise ValidationError('Isi file tidak sesuai dengan ekstensi PDF (File Palsu atau Rusak).')
+                elif ext in ['.jpg', '.jpeg']:
+                    # JPEG starts with FF D8
+                    if not header.startswith(b'\xff\xd8'):
+                        raise ValidationError('Isi file tidak sesuai dengan ekstensi JPG/JPEG.')
+                elif ext == '.png':
+                    # PNG starts with 89 50 4E 47 0D 0A 1A 0A
+                    if not header.startswith(b'\x89PNG\r\n\x1a\n'):
+                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PNG.')
+                # For DOC/DOCX/XLS/XLSX/CSV, we rely on the extension as signature checking is complex 
+                # (e.g. DOCX is a ZIP file starting with PK), and it's acceptable per Tahap 34 constraints.
+            except Exception as e:
+                raise ValidationError(f'Gagal memvalidasi isi file: {str(e)}')
+                
+            # Update the file name to the safe basename just in case
+            file.name = basename
+            
         return file
 
 from django.contrib.auth.models import User
