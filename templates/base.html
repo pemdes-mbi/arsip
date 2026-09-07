@@ -26,6 +26,17 @@
                     <li class="nav-item">
                         <a class="nav-link {% if 'kategori' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:kategori_list' %}">Kategori</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'laporan' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:arsip_laporan' %}">📊 Laporan</a>
+                    </li>
+                    {% if user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:user_list' %}">Manajemen User</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'audit' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'arsip:audit_log' %}">📋 Log Aktivitas</a>
+                    </li>
+                    {% endif %}
                     {% endif %}
                 </ul>
                 {% if user.is_authenticated %}
@@ -46,6 +57,15 @@
     </nav>
 
     <div class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
         {% block content %}
         {% endblock %}
     </div>

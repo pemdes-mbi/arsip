@@ -3,10 +3,10 @@
 {% block content %}
 <div class="row mb-3">
     <div class="col-md-6">
-        <h2>Arsip Desa</h2>
+        <h2>Laporan Arsip</h2>
     </div>
     <div class="col-md-6 text-end">
-        <a href="{% url 'arsip:arsip_tambah' %}" class="btn btn-primary">+ Tambah Arsip</a>
+        <a href="{% url 'arsip:arsip_export_csv' %}?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}" class="btn btn-success">📥 Export CSV</a>
     </div>
 </div>
 
@@ -18,11 +18,11 @@
 
 <div class="card mb-4">
     <div class="card-body">
-        <form method="get" class="row g-2 mb-3 align-items-center">
+        <form method="get" class="row g-2 mb-3">
             <div class="col-md-3">
                 <input type="text" name="q" class="form-control" placeholder="Cari nama warga, NIK, atau nama file..." value="{{ query }}">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <select name="kategori" class="form-select">
                     <option value="">-- Semua Kategori --</option>
                     {% for kat in kategori_aktif %}
@@ -36,10 +36,9 @@
             <div class="col-md-2">
                 <input type="date" name="tanggal_sampai" class="form-control" value="{{ tanggal_sampai }}" title="Tanggal Sampai">
             </div>
-            <div class="col-md-3 d-flex gap-1">
-                <button class="btn btn-primary flex-grow-1" type="submit" title="Cari">🔍 Cari</button>
-                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-outline-secondary flex-grow-1" title="Reset Filter">↻ Reset</a>
-                <a href="{% url 'arsip:arsip_export_csv' %}?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}" class="btn btn-success flex-grow-1" title="Export CSV">📥 CSV</a>
+            <div class="col-md-2 d-flex gap-1">
+                <button class="btn btn-primary flex-grow-1" type="submit" title="Cari">🔍 CARI</button>
+                <a href="{% url 'arsip:arsip_laporan' %}" class="btn btn-outline-secondary" title="Reset Filter">↻ RESET</a>
             </div>
         </form>
 
@@ -61,35 +60,26 @@
                         <th>Kategori</th>
                         <th>Nama File</th>
                         <th>Tanggal Upload</th>
-                        <th>Aksi</th>
+                        <th>Uploaded By</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in arsip_list %}
+                    {% for item in page_obj %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
+                        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
                         <td>{{ item.nama_warga }}</td>
                         <td>{{ item.nik }}</td>
                         <td>{{ item.kategori.nama }}</td>
-                        <td>{{ item.nama_file }}</td>
+                        <td class="text-break">{{ item.nama_file }}</td>
                         <td>{{ item.tanggal_upload|date:"d/m/Y H:i" }}</td>
-                        <td>
-                            <div class="d-flex flex-column flex-lg-row gap-1">
-                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-info text-white">Detail</a>
-                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{% url 'arsip:arsip_hapus' item.id %}" method="post" class="d-inline m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger w-100">Hapus</button>
-                                </form>
-                            </div>
-                        </td>
+                        <td>{{ item.uploaded_by.username|default:"-" }}</td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7" class="text-center">
                             <div class="py-4 text-muted">
                                 <h5>Tidak ada arsip yang ditemukan.</h5>
-                                <p class="mb-0">Silakan ubah pencarian/filter atau tambah arsip baru.</p>
+                                <p class="mb-0">Silakan ubah pencarian/filter.</p>
                             </div>
                         </td>
                     </tr>

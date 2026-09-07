@@ -41,3 +41,43 @@ class Arsip(models.Model):
 
     def __str__(self):
         return self.nama_file
+
+class AuditLog(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL
+    )
+    action = models.CharField(max_length=50)
+    description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        username = self.user.username if self.user else "Unknown"
+        return f"{username} - {self.action} - {self.created_at}"
+
+from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.dispatch import receiver
+from django.contrib import messages
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    AuditLog.objects.create(
+        user=user,
+        action="LOGIN",
+        description="User berhasil login."
+    )
+    if request:
+        messages.success(request, 'Login berhasil.')
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    if user:
+        AuditLog.objects.create(
+            user=user,
+            action="LOGOUT",
+            description="User logout."
+        )
+    if request:
+        messages.success(request, 'Anda telah logout.')

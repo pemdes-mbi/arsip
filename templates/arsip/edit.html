@@ -87,6 +87,7 @@
                         <!-- DEFAULT FILE INPUT -->
                         <div id="default_file_container" class="mb-3 border rounded p-3 bg-light">
                             {{ form.file }}
+                            <div id="file_feedback" class="mt-2 text-success fw-bold" style="display:none;"></div>
                             <small class="form-text text-muted d-block mt-2" id="help_text_arsip">Format yang didukung: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX, CSV (Maks 10MB). Biarkan kosong jika tidak ingin mengubah file.</small>
                         </div>
                         
@@ -104,8 +105,8 @@
                     </div>
                     
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'arsip:arsip_list' %}" class="btn btn-secondary">Batal</a>
-                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                        <a href="{% url 'arsip:arsip_list' %}" class="btn btn-secondary" id="btn_batal">Batal</a>
+                        <button type="submit" class="btn btn-primary" id="btn_submit">Simpan Perubahan</button>
                     </div>
                 </form>
             </div>
@@ -133,10 +134,12 @@ function startCamera() {
             })
             .catch(function(err) {
                 console.error("Camera error:", err);
+                errorMsg.innerText = "Izin kamera diperlukan untuk mengambil gambar.";
                 errorMsg.style.display = 'block';
                 video.style.display = 'none';
             });
     } else {
+        errorMsg.innerText = "Izin kamera diperlukan untuk mengambil gambar.";
         errorMsg.style.display = 'block';
         video.style.display = 'none';
     }
@@ -167,6 +170,10 @@ function capturePhoto() {
     preview.style.display = 'block';
     document.getElementById('camera_controls').style.display = 'none';
     document.getElementById('preview_controls').style.display = 'block';
+    
+    const feedback = document.getElementById('file_feedback');
+    feedback.innerText = "Foto berhasil diambil.";
+    feedback.style.display = 'block';
 }
 
 function retakePhoto() {
@@ -177,14 +184,13 @@ function retakePhoto() {
     video.style.display = 'block';
     document.getElementById('camera_controls').style.display = 'block';
     document.getElementById('preview_controls').style.display = 'none';
+    
+    document.getElementById('file_feedback').style.display = 'none';
 }
 
 function modeFoto() {
-    const realInput = document.getElementById('{{ form.file.id_for_label }}');
-    
     document.getElementById('camera_container').style.display = 'block';
     document.getElementById('btn_mode_foto').classList.replace('btn-outline-primary', 'btn-primary');
-    
     startCamera();
 }
 
@@ -204,18 +210,44 @@ function usePhoto() {
         const realInput = document.getElementById('{{ form.file.id_for_label }}');
         realInput.files = dt.files;
         
-        alert("Foto berhasil digunakan. Silakan klik Simpan.");
+        const feedback = document.getElementById('file_feedback');
+        feedback.innerText = "Foto siap digunakan.";
+        feedback.style.display = 'block';
+        
         closeCamera();
     }, 'image/jpeg', 0.9);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Make sure the default file input is visible and accepting all formats
     const realInput = document.getElementById('{{ form.file.id_for_label }}');
+    const feedback = document.getElementById('file_feedback');
+    const form = document.querySelector('form');
+    const btnSubmit = document.getElementById('btn_submit');
+    const btnBatal = document.getElementById('btn_batal');
+    
     if (realInput) {
         realInput.style.display = 'block';
         realInput.setAttribute('accept', '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv');
+        
+        realInput.addEventListener('change', function() {
+            if (this.files && this.files.length > 0) {
+                feedback.innerText = "File dipilih: " + this.files[0].name;
+                feedback.style.display = 'block';
+            } else {
+                feedback.style.display = 'none';
+            }
+        });
     }
+    
+    form.addEventListener('submit', function(e) {
+        // Double submit protection and loading feedback
+        if (form.checkValidity()) {
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menyimpan...';
+            btnSubmit.classList.add('disabled');
+            btnBatal.classList.add('disabled');
+            // Allow form submission to proceed
+        }
+    });
 });
 </script>
 {% endblock %}

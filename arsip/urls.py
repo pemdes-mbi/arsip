@@ -14,4 +14,16 @@ urlpatterns = [
     path('arsip/<int:id>/', views.arsip_detail, name='arsip_detail'),
     path('arsip/<int:id>/edit/', views.arsip_edit, name='arsip_edit'),
     path('arsip/<int:id>/hapus/', views.arsip_hapus, name='arsip_hapus'),
+    
+    # User Management
+    path('users/', views.user_list, name='user_list'),
+    path('users/tambah/', views.user_add, name='user_add'),
+    path('users/<int:id>/edit/', views.user_edit, name='user_edit'),
+    path('users/<int:id>/toggle/', views.user_toggle, name='user_toggle'),
+    
+    # Audit Log
+    path('audit-log/', views.audit_log, name='audit_log'),
+    # Laporan & Export
+    path('laporan/', views.arsip_laporan, name='arsip_laporan'),
+    path('export/csv/', views.arsip_export_csv, name='arsip_export_csv'),
 ]

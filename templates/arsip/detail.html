@@ -16,74 +16,88 @@
                 </div>
             </div>
             <div class="card-body">
-                <table class="table table-bordered">
-                    <tbody>
-                        <tr>
-                            <th width="30%">Nama Warga</th>
-                            <td>{{ arsip.nama_warga }}</td>
-                        </tr>
-                        <tr>
-                            <th>NIK</th>
-                            <td>{{ arsip.nik }}</td>
-                        </tr>
-                        <tr>
-                            <th>Kategori</th>
-                            <td>{{ arsip.kategori.nama }}</td>
-                        </tr>
-                        <tr>
-                            <th>File Dokumen</th>
-                            <td>
-                                {% if arsip.file %}
-                                    <a href="{{ arsip.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Lihat / Buka File</a>
-                                {% else %}
-                                    <span class="text-muted">File belum tersedia.</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Nama File</th>
-                            <td>{{ arsip.nama_file }}</td>
-                        </tr>
-                        <tr>
-                            <th>Keterangan</th>
-                            <td>{{ arsip.keterangan|default:"-"|linebreaks }}</td>
-                        </tr>
-                        <tr>
-                            <th>Diunggah oleh</th>
-                            <td>{{ arsip.uploaded_by|default:"-" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Tanggal Upload</th>
-                            <td>{{ arsip.tanggal_upload|date:"d F Y H:i" }}</td>
-                        </tr>
-                        <tr>
-                            <th>Google Drive File</th>
-                            <td>
-                                {% if arsip.drive_file_id %}
-                                    <a href="https://drive.google.com/file/d/{{ arsip.drive_file_id }}/view" target="_blank" class="btn btn-sm btn-outline-success">Buka di Google Drive</a>
-                                {% else %}
-                                    <span class="text-muted">File Google Drive belum tersedia.</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h5 class="mb-3 text-primary border-bottom pb-2">INFORMASI ARSIP</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table table-borderless table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="35%" class="text-muted">Nama Warga</th>
+                                <td class="fw-bold">{{ arsip.nama_warga }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">NIK</th>
+                                <td>{{ arsip.nik }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Kategori</th>
+                                <td><span class="badge bg-secondary">{{ arsip.kategori.nama }}</span></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Keterangan</th>
+                                <td>{{ arsip.keterangan|default:"-"|linebreaks }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h5 class="mb-3 text-primary border-bottom pb-2">INFORMASI FILE</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table table-borderless table-sm">
+                        <tbody>
+                            <tr>
+                                <th width="35%" class="text-muted">Nama File</th>
+                                <td class="text-break">{{ arsip.nama_file }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Tanggal Upload</th>
+                                <td>{{ arsip.tanggal_upload|date:"d F Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Diunggah oleh</th>
+                                <td>{{ arsip.uploaded_by|default:"-" }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Akses File Lokal</th>
+                                <td>
+                                    {% if file_exists %}
+                                        <a href="{{ arsip.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">📥 Buka / Unduh File</a>
+                                    {% else %}
+                                        <span class="text-danger fw-bold">File lokal tidak tersedia.</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Akses Google Drive</th>
+                                <td>
+                                    {% if arsip.drive_file_id %}
+                                        <a href="https://drive.google.com/file/d/{{ arsip.drive_file_id }}/view" target="_blank" class="btn btn-sm btn-outline-success">☁️ Buka di Google Drive</a>
+                                    {% else %}
+                                        <span class="text-muted">File Google Drive tidak tersedia.</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 
                 <div class="mt-4 mb-4">
                     <h5>Preview File</h5>
-                    {% if not arsip.file %}
+                    {% if not file_exists %}
                         <div class="alert alert-warning mb-0">File lokal tidak tersedia untuk preview.</div>
                     {% else %}
                         {% if file_type == 'image' %}
                             <div class="text-center">
-                                <img src="{{ arsip.file.url }}" class="img-fluid rounded border shadow-sm" alt="Preview Gambar" style="max-height: 600px;">
+                                <img src="{{ arsip.file.url }}" class="img-fluid rounded border shadow-sm" alt="Preview Gambar" style="max-height: 600px; max-width: 100%; height: auto;">
                             </div>
                         {% elif file_type == 'pdf' %}
-                            <div class="ratio ratio-4x3 border rounded shadow-sm">
+                            <div class="ratio ratio-4x3 border rounded shadow-sm" style="max-width: 100%;">
                                 <iframe src="{{ arsip.file.url }}" title="PDF Preview" allowfullscreen></iframe>
                             </div>
                         {% else %}
-                            <div class="alert alert-secondary mb-0">Preview tidak tersedia untuk jenis file ini.</div>
+                            <div class="alert alert-secondary mb-0">
+                                <p class="mb-2">Preview tidak tersedia untuk jenis dokumen ini (Word/Excel/CSV).</p>
+                                <a href="{{ arsip.file.url }}" target="_blank" class="btn btn-sm btn-primary">📥 Buka / Unduh File</a>
+                            </div>
                         {% endif %}
                     {% endif %}
                 </div>
