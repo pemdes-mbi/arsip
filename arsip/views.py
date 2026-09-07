@@ -470,11 +470,15 @@ def arsip_laporan(request):
 @login_required
 def arsip_export_csv(request):
     arsip_qs, _, _, _, _ = _get_arsip_filtered_qs(request)
+    arsip_qs = arsip_qs.select_related('kategori', 'uploaded_by')
     
     now = timezone.localtime(timezone.now()) if getattr(settings, 'USE_TZ', False) else timezone.now()
     timestamp = now.strftime('%Y%m%d_%H%M%S')
-    response = HttpResponse(content_type='text/csv')
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="laporan_arsip_{timestamp}.csv"'
+    
+    # Write UTF-8 BOM for spreadsheet compatibility
+    response.write('\ufeff')
 
     writer = csv.writer(response)
     writer.writerow(['No', 'Nama Warga', 'NIK', 'Kategori', 'Nama File', 'Keterangan', 'Uploaded By', 'Tanggal Upload', 'Google Drive ID'])
