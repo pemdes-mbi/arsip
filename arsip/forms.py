@@ -35,7 +35,11 @@ class ArsipForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['kategori'].queryset = Kategori.objects.filter(aktif=True)
+        if self.instance and self.instance.pk and self.instance.kategori:
+            self.fields['kategori'].queryset = Kategori.objects.filter(aktif=True) | Kategori.objects.filter(pk=self.instance.kategori.pk)
+        else:
+            self.fields['kategori'].queryset = Kategori.objects.filter(aktif=True)
+            
         self.fields['nik'].required = True
         if not self.instance.pk:
             self.fields['file'].required = True

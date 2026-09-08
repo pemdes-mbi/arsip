@@ -1,32 +1,51 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card shadow">
-            <div class="card-body p-4">
-                <h3 class="text-center mb-4">SISTEM ARSIP DESA</h3>
-                
-                {% if form.errors %}
-                    <div class="alert alert-danger">
-                        Username atau Password salah.
-                    </div>
-                {% endif %}
-                
-                <form method="post">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" name="username" class="form-control" id="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" id="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100">Login</button>
-                </form>
-            </div>
+<div class="container d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh;">
+    
+    <div class="card shadow-lg border-0" style="max-width: 450px; width: 100%; border-radius: 12px; overflow: hidden;">
+        <div class="card-header border-0 text-center text-white py-4" style="background-color: var(--desa-primary);">
+            <img src="{% static 'img/logo_kutim.png' %}" alt="Logo" class="mb-3 mt-2" style="width: 80px; height: auto;">
+            <h4 class="fw-bold mb-0" style="letter-spacing: 1px;">ARSIP DESA</h4>
+            <p class="mb-0 opacity-75">Muara Bengkal Ilir</p>
         </div>
+        <div class="card-body p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h5 class="fw-bold text-dark">Login Operator</h5>
+                <p class="text-muted small">Silakan masuk menggunakan kredensial Anda.</p>
+            </div>
+            
+            {% if form.errors %}
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>Username atau Password salah.</div>
+                </div>
+            {% endif %}
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label for="username" class="form-label text-muted small fw-bold text-uppercase">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+                        <input type="text" name="username" class="form-control border-start-0 ps-0 bg-light" id="username" placeholder="Masukkan username" required autofocus>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label text-muted small fw-bold text-uppercase">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-shield-lock text-muted"></i></span>
+                        <input type="password" name="password" class="form-control border-start-0 ps-0 bg-light" id="password" placeholder="Masukkan password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold text-uppercase" style="letter-spacing: 1px;">MASUK</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="text-center mt-4 text-muted small">
+        <p>© {% now "Y" %} Pemerintah Desa - Sistem Arsip.<br>Dikelola untuk kemudahan pelayanan masyarakat.</p>
     </div>
 </div>
 {% endblock %}

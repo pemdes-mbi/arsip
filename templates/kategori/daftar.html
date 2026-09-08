@@ -1,83 +1,135 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mb-3">
-    <div class="col-md-6">
-        <h2>Kategori Arsip</h2>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">MASTER KATEGORI SURAT</h4>
+        <p class="text-muted small mb-0">Kelola master data klasifikasi dokumen desa.</p>
     </div>
-    <div class="col-md-6 text-end">
-        <a href="{% url 'arsip:kategori_tambah' %}" class="btn btn-primary">+ Tambah Kategori</a>
+    <div class="mt-2 mt-md-0">
+        <a href="{% url 'arsip:kategori_tambah' %}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Kategori
+        </a>
     </div>
 </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-{% endif %}
-
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="mb-3">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Cari kategori..." value="{{ query }}">
-                <button class="btn btn-outline-secondary" type="submit">Cari</button>
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+                <form method="get" action="{% url 'arsip:kategori_list' %}" class="d-flex w-100">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" class="form-control border-start-0 ps-0 bg-light" name="q" value="{{ query }}" placeholder="Cari nama kategori..." style="max-width: 300px;">
+                        <button class="btn btn-light border border-start-0" type="submit">Cari</button>
+                    </div>
+                </form>
             </div>
-        </form>
-
-        <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Nama</th>
-                        <th>Status</th>
-                        <th>Google Drive</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in kategori_list %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ item.nama }}</td>
-                        <td>
-                            {% if item.aktif %}
-                                <span class="badge bg-success">Aktif</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Nonaktif</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item.drive_folder_id %}
-                                {{ item.drive_folder_id }}
-                            {% else %}
-                                <span class="text-muted">Belum terhubung</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="d-flex flex-column flex-lg-row gap-1">
-                                <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{% url 'arsip:kategori_toggle' item.id %}" method="post" class="d-inline m-0">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-{% if item.aktif %}danger{% else %}success{% endif %} w-100">
-                                        {% if item.aktif %}Nonaktifkan{% else %}Aktifkan{% endif %}
-                                    </button>
-                                </form>
+            
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4 text-center" style="width: 10%;">No</th>
+                                <th style="width: 50%;">Nama Kategori</th>
+                                <th class="text-center" style="width: 20%;">Jumlah Arsip</th>
+                                <th class="text-center pe-4" style="width: 20%;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in kategori_list %}
+                            <tr>
+                                <td class="ps-4 text-center fw-medium text-muted">{{ forloop.counter }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="fw-bold text-dark fs-6">{{ item.nama }}</span>
+                                        {% if item.aktif %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small" style="font-size: 0.72rem;">
+                                                <i class="bi bi-check-circle-fill me-1"></i>MASTER RESMI
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1 small" style="font-size: 0.72rem;">
+                                                <i class="bi bi-clock-history me-1"></i>LEGACY / HISTORIS
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% if item.arsip.count > 0 %}
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2">{{ item.arsip.count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-muted border rounded-pill px-3 py-2">0</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center pe-4">
+                                    <div class="btn-group shadow-sm" role="group">
+                                        <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Kategori">
+                                            <i class="bi bi-pencil text-warning"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteKategori{{ item.id }}" title="Hapus Kategori">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteKategori{{ item.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow">
+                                        <div class="modal-header bg-danger text-white border-0">
+                                            <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body py-4 text-center">
+                                            <i class="bi bi-tags text-danger display-4 d-block mb-3 opacity-50"></i>
+                                            <h5 class="fw-bold">Hapus Kategori "{{ item.nama }}"?</h5>
+                                            {% if item.arsip.count > 0 %}
+                                                <div class="alert alert-warning mt-3 mb-0 border-0 text-start">
+                                                    <i class="bi bi-exclamation-circle-fill me-2"></i> Kategori ini masih digunakan oleh <strong>{{ item.arsip.count }} arsip</strong>. Sistem akan menolak penghapusan untuk menjaga integritas data.
+                                                </div>
+                                            {% else %}
+                                                <p class="text-muted mb-0">Tindakan ini bersifat permanen dan tidak dapat dibatalkan.</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer border-0 justify-content-center bg-light">
+                                            <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Batal</button>
+                                            <form action="{% url 'arsip:kategori_hapus' item.id %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger px-4">Hapus Permanen</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center">
-                            <div class="py-4 text-muted">
-                                <h5>Belum ada data kategori.</h5>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <i class="bi bi-tags fs-1 d-block mb-3 opacity-25"></i>
+                                    <h6>Belum ada Master Kategori</h6>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 bg-primary text-white mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>Informasi Master Data</h5>
+                <p class="small opacity-75 mb-3">
+                    Kategori digunakan untuk mengelompokkan dokumen/arsip warga agar mudah dicari dan dilaporkan.
+                </p>
+                <ul class="list-unstyled small opacity-75 mb-0">
+                    <li class="mb-2"><i class="bi bi-check2-circle me-2"></i>Kategori yang telah digunakan oleh dokumen tidak dapat dihapus.</li>
+                    <li class="mb-2"><i class="bi bi-check2-circle me-2"></i>Gunakan nama kategori yang baku dan konsisten.</li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>

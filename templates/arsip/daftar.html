@@ -1,169 +1,219 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mb-3">
-    <div class="col-md-6">
-        <h2>Arsip Desa</h2>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div>
+        <h4 class="fw-bold text-dark mb-1">DAFTAR ARSIP DESA</h4>
+        <p class="text-muted small mb-0">Kelola dan temukan seluruh dokumen administrasi desa.</p>
     </div>
-    <div class="col-md-6 text-end">
-        <a href="{% url 'arsip:arsip_tambah' %}" class="btn btn-primary">+ Tambah Arsip</a>
+    <div class="mt-2 mt-md-0">
+        <a href="{% url 'arsip:arsip_tambah' %}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Arsip
+        </a>
     </div>
 </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-    {% endfor %}
-{% endif %}
-
-<div class="card mb-4">
+<!-- Search & Filter Toolbar -->
+<div class="card shadow-sm border-0 mb-4 bg-light">
     <div class="card-body">
-        <form method="get" class="row g-2 mb-3 align-items-center">
-            <div class="col-md-3">
-                <input type="text" name="q" class="form-control" placeholder="Cari nama warga, NIK, atau nama file..." value="{{ query }}">
+        <form method="get" action="{% url 'arsip:arsip_list' %}" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="q" class="form-label text-muted small fw-bold text-uppercase">Pencarian</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0 ps-0" name="q" id="q" value="{{ query }}" placeholder="Nama warga, NIK, atau Nama File...">
+                </div>
             </div>
-            <div class="col-md-2">
-                <select name="kategori" class="form-select">
+            <div class="col-md-3">
+                <label for="kategori" class="form-label text-muted small fw-bold text-uppercase">Kategori Surat</label>
+                <select class="form-select" name="kategori" id="kategori">
                     <option value="">-- Semua Kategori --</option>
-                    {% for kat in kategori_aktif %}
-                        <option value="{{ kat.id }}" {% if kategori_id == kat.id|stringformat:"s" %}selected{% endif %}>{{ kat.nama }}</option>
-                    {% endfor %}
+                    <optgroup label="MASTER RESMI">
+                        {% for kat in kategori_aktif %}
+                            <option value="{{ kat.id }}" {% if kategori_id == kat.id|stringformat:"s" %}selected{% endif %}>{{ kat.nama }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% if kategori_legacy %}
+                    <optgroup label="LEGACY / HISTORIS">
+                        {% for kat in kategori_legacy %}
+                            <option value="{{ kat.id }}" {% if kategori_id == kat.id|stringformat:"s" %}selected{% endif %}>{{ kat.nama }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endif %}
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="date" name="tanggal_dari" class="form-control" value="{{ tanggal_dari }}" title="Tanggal Dari">
+                <label for="tanggal_dari" class="form-label text-muted small fw-bold text-uppercase">Dari Tanggal</label>
+                <input type="date" class="form-control" name="tanggal_dari" id="tanggal_dari" value="{{ tanggal_dari }}">
             </div>
             <div class="col-md-2">
-                <input type="date" name="tanggal_sampai" class="form-control" value="{{ tanggal_sampai }}" title="Tanggal Sampai">
+                <label for="tanggal_sampai" class="form-label text-muted small fw-bold text-uppercase">S/D Tanggal</label>
+                <input type="date" class="form-control" name="tanggal_sampai" id="tanggal_sampai" value="{{ tanggal_sampai }}">
             </div>
-            <div class="col-md-3 d-flex flex-wrap gap-1">
-                <button class="btn btn-primary flex-grow-1" type="submit" title="Cari">🔍 Cari</button>
-                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-outline-secondary flex-grow-1" title="Reset Filter">↻ Reset</a>
-                <a href="{% url 'arsip:arsip_export_csv' %}?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}" class="btn btn-success flex-grow-1" title="Export CSV">📥 CSV</a>
+            <div class="col-md-1 d-grid gap-2">
+                <button type="submit" class="btn btn-primary" title="Terapkan Filter"><i class="bi bi-funnel-fill"></i></button>
+                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-outline-secondary" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
             </div>
         </form>
+    </div>
+</div>
 
-        <div class="mb-2">
-            {% if page_obj.paginator.count > 0 %}
-                <span class="text-muted small">Menampilkan {{ page_obj.start_index }}–{{ page_obj.end_index }} dari {{ page_obj.paginator.count }} arsip.</span>
-            {% else %}
-                <span class="text-muted small">Tidak ada arsip yang ditemukan.</span>
-            {% endif %}
-        </div>
-
+<!-- Table Area -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-striped table-hover">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-muted small text-uppercase">
                     <tr>
-                        <th>No</th>
-                        <th>Nama Warga</th>
-                        <th>NIK</th>
-                        <th>Kategori</th>
-                        <th>Nama File</th>
-                        <th>Tanggal Upload</th>
-                        <th>Aksi</th>
+                        <th class="ps-4 text-center" style="width: 5%;">No</th>
+                        <th style="width: 25%;">Identitas Pemilik</th>
+                        <th style="width: 15%;">Kategori</th>
+                        <th style="width: 25%;">Dokumen File</th>
+                        <th style="width: 15%;">Tgl. Upload</th>
+                        <th class="text-center pe-4" style="width: 15%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in arsip_list %}
+                    {% for item in page_obj %}
                     <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>{{ item.nama_warga }}</td>
-                        <td>{{ item.nik }}</td>
-                        <td>{{ item.kategori.nama }}</td>
-                        <td>{{ item.nama_file }}</td>
-                        <td>{{ item.tanggal_upload|date:"d/m/Y H:i" }}</td>
+                        <td class="ps-4 text-center fw-medium text-muted">
+                            {{ page_obj.start_index|add:forloop.counter0 }}
+                        </td>
                         <td>
-                            <div class="d-flex flex-column flex-lg-row gap-1">
-                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-info text-white">Detail</a>
-                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-warning">Edit</a>
-                                <form action="{% url 'arsip:arsip_hapus' item.id %}" method="post" class="d-inline m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus arsip ini?');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger w-100">Hapus</button>
-                                </form>
+                            <div class="fw-bold text-dark">{{ item.nama_warga }}</div>
+                            <div class="text-muted small font-monospace"><i class="bi bi-person-badge me-1"></i>{{ item.nik }}</div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark mb-1">{{ item.kategori.nama }}</div>
+                            {% if item.kategori.aktif %}
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-patch-check-fill me-1"></i>MASTER RESMI
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.75rem;">
+                                    <i class="bi bi-clock-history me-1"></i>LEGACY / HISTORIS
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if '.pdf' in item.nama_file|lower %}
+                                    <i class="bi bi-file-pdf text-danger fs-4 me-2"></i>
+                                {% elif '.jpg' in item.nama_file|lower or '.jpeg' in item.nama_file|lower or '.png' in item.nama_file|lower %}
+                                    <i class="bi bi-file-image text-primary fs-4 me-2"></i>
+                                {% else %}
+                                    <i class="bi bi-file-text text-secondary fs-4 me-2"></i>
+                                {% endif %}
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ item.nama_file }}">
+                                    {{ item.nama_file }}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-muted small mb-1">
+                                <i class="bi bi-calendar3 me-1"></i>{{ item.tanggal_upload|date:"d M Y" }}
+                            </div>
+                            <div class="text-muted small" style="font-size: 0.75rem;">
+                                <i class="bi bi-person me-1"></i>{{ item.uploaded_by.username|default:"-" }}
+                            </div>
+                        </td>
+                        <td class="text-center pe-4">
+                            <div class="btn-group shadow-sm" role="group">
+                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-light border" title="Detail Arsip">
+                                    <i class="bi bi-eye text-primary"></i>
+                                </a>
+                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Arsip">
+                                    <i class="bi bi-pencil text-warning"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}" title="Hapus Arsip">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal{{ item.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ item.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header bg-danger text-white border-0">
+                                    <h5 class="modal-title" id="deleteModalLabel{{ item.id }}"><i class="bi bi-exclamation-triangle-fill me-2"></i>Konfirmasi Hapus</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body py-4">
+                                    <p class="mb-1">Apakah Anda yakin ingin menghapus arsip ini secara permanen?</p>
+                                    <div class="bg-light p-3 rounded mt-3 border">
+                                        <div class="fw-bold">{{ item.nama_warga }} ({{ item.kategori.nama }})</div>
+                                        <div class="text-muted small text-truncate" title="{{ item.nama_file }}"><i class="bi bi-paperclip me-1"></i>{{ item.nama_file }}</div>
+                                    </div>
+                                    <p class="text-danger small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>Tindakan ini akan menghapus file dari server lokal (Google Drive tetap dipertahankan).</p>
+                                </div>
+                                <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                                    <form action="{% url 'arsip:arsip_hapus' item.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger">Hapus Permanen</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center">
-                            <div class="py-4 text-muted">
-                                <h5>Tidak ada arsip yang ditemukan.</h5>
-                                <p class="mb-0">Silakan ubah pencarian/filter atau tambah arsip baru.</p>
-                            </div>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-folder-x fs-1 d-block mb-3 text-muted opacity-50"></i>
+                            <h6 class="fw-bold">Tidak ada arsip ditemukan</h6>
+                            <p class="mb-0">Silakan ubah kata kunci atau tambah arsip baru.</p>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        
-        {% if page_obj.has_other_pages %}
-        <nav aria-label="Navigasi halaman daftar arsip" class="mt-4">
-            <ul class="pagination justify-content-center flex-wrap">
-                <!-- First -->
-                {% if page_obj.number > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}&page=1" aria-label="Pertama" title="Halaman Pertama">« Pertama</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled" aria-disabled="true">
-                        <span class="page-link" aria-hidden="true">« Pertama</span>
-                    </li>
-                {% endif %}
-
-                <!-- Previous -->
-                {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}&page={{ page_obj.previous_page_number }}" aria-label="Sebelumnya" title="Halaman Sebelumnya">‹ Sebelumnya</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled" aria-disabled="true">
-                        <span class="page-link" aria-hidden="true">‹ Sebelumnya</span>
-                    </li>
-                {% endif %}
-
-                <!-- Page Numbers -->
-                {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">{{ num }}</span>
-                        </li>
-                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item">
-                            <a class="page-link" href="?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}&page={{ num }}" aria-label="Halaman {{ num }}">{{ num }}</a>
-                        </li>
-                    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
-                        <li class="page-item disabled" aria-disabled="true">
-                            <span class="page-link" aria-hidden="true">...</span>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Next -->
-                {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}&page={{ page_obj.next_page_number }}" aria-label="Berikutnya" title="Halaman Berikutnya">Berikutnya ›</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled" aria-disabled="true">
-                        <span class="page-link" aria-hidden="true">Berikutnya ›</span>
-                    </li>
-                {% endif %}
-                
-                <!-- Last -->
-                {% if page_obj.number < page_obj.paginator.num_pages %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|urlencode }}&kategori={{ kategori_id }}&tanggal_dari={{ tanggal_dari }}&tanggal_sampai={{ tanggal_sampai }}&page={{ page_obj.paginator.num_pages }}" aria-label="Terakhir" title="Halaman Terakhir">Terakhir »</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled" aria-disabled="true">
-                        <span class="page-link" aria-hidden="true">Terakhir »</span>
-                    </li>
-                {% endif %}
-            </ul>
-        </nav>
-        {% endif %}
     </div>
 </div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-end mb-0">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if kategori_id %}&kategori={{ kategori_id }}{% endif %}{% if tanggal_dari %}&tanggal_dari={{ tanggal_dari }}{% endif %}{% if tanggal_sampai %}&tanggal_sampai={{ tanggal_sampai }}{% endif %}">&laquo; First</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if kategori_id %}&kategori={{ kategori_id }}{% endif %}{% if tanggal_dari %}&tanggal_dari={{ tanggal_dari }}{% endif %}{% if tanggal_sampai %}&tanggal_sampai={{ tanggal_sampai }}{% endif %}">Prev</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">&laquo; First</span></li>
+            <li class="page-item disabled"><span class="page-link">Prev</span></li>
+        {% endif %}
+
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+                <li class="page-item active" aria-current="page">
+                    <span class="page-link shadow-sm">{{ i }}</span>
+                </li>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                <li class="page-item">
+                    <a class="page-link shadow-sm" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if kategori_id %}&kategori={{ kategori_id }}{% endif %}{% if tanggal_dari %}&tanggal_dari={{ tanggal_dari }}{% endif %}{% if tanggal_sampai %}&tanggal_sampai={{ tanggal_sampai }}{% endif %}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if kategori_id %}&kategori={{ kategori_id }}{% endif %}{% if tanggal_dari %}&tanggal_dari={{ tanggal_dari }}{% endif %}{% if tanggal_sampai %}&tanggal_sampai={{ tanggal_sampai }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link shadow-sm" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if kategori_id %}&kategori={{ kategori_id }}{% endif %}{% if tanggal_dari %}&tanggal_dari={{ tanggal_dari }}{% endif %}{% if tanggal_sampai %}&tanggal_sampai={{ tanggal_sampai }}{% endif %}">Last &raquo;</a>
+            </li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+            <li class="page-item disabled"><span class="page-link">Last &raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
 {% endblock %}

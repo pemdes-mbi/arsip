@@ -1,88 +1,98 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row mb-3">
-    <div class="col-md-12">
-        <h2>{{ title }}</h2>
-    </div>
+<div class="mb-4">
+    <a href="{% url 'arsip:user_list' %}" class="text-decoration-none text-muted mb-2 d-inline-block"><i class="bi bi-arrow-left me-1"></i>Kembali ke Daftar Pengguna</a>
+    <h4 class="fw-bold text-dark mb-1 text-uppercase">{{ title }}</h4>
+    <p class="text-muted small mb-0">Kelola informasi profil dan kredensial operator sistem.</p>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="post">
+<div class="row">
+    <div class="col-xl-8 col-lg-10">
+        <form method="post" id="formUser">
             {% csrf_token %}
             
-            {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {{ form.non_field_errors }}
-            </div>
-            {% endif %}
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Username</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="text-danger small">{{ form.username.errors|join:", " }}</div>
-                    {% endif %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-person-lines-fill me-2"></i>Informasi Profil</h6>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Email</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <div class="text-danger small">{{ form.email.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Nama Depan</label>
-                    {{ form.first_name }}
-                    {% if form.first_name.errors %}
-                        <div class="text-danger small">{{ form.first_name.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Nama Belakang</label>
-                    {{ form.last_name }}
-                    {% if form.last_name.errors %}
-                        <div class="text-danger small">{{ form.last_name.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Password</label>
-                    {{ form.password }}
-                    {% if form.password.help_text %}
-                        <small class="form-text text-muted">{{ form.password.help_text }}</small>
-                    {% endif %}
-                    {% if form.password.errors %}
-                        <div class="text-danger small">{{ form.password.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Konfirmasi Password</label>
-                    {{ form.password_confirm }}
-                    {% if form.password_confirm.errors %}
-                        <div class="text-danger small">{{ form.password_confirm.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-bold">Role Akses</label>
-                    {{ form.role }}
-                    {% if form.role.errors %}
-                        <div class="text-danger small">{{ form.role.errors|join:", " }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3 d-flex align-items-center mt-md-4">
-                    <div class="form-check form-switch">
-                        {{ form.is_active }}
-                        <label class="form-check-label ms-2 fw-bold" for="{{ form.is_active.id_for_label }}">Akun Aktif</label>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.username.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Username (ID Login) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                                {{ form.username }}
+                            </div>
+                            {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Email <span class="text-muted fw-normal">(Opsional)</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="bi bi-envelope text-muted"></i></span>
+                                {{ form.email }}
+                            </div>
+                            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Nama Depan</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Nama Belakang</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Simpan User</button>
-                <a href="{% url 'arsip:user_list' %}" class="btn btn-secondary">Batal</a>
+
+            <div class="card shadow-sm border-0 mb-4 bg-light">
+                <div class="card-header bg-light border-bottom py-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-shield-lock me-2"></i>Kredensial & Hak Akses</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.role.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Peran / Hak Akses <span class="text-danger">*</span></label>
+                            {{ form.role }}
+                            <div class="form-text small text-muted">Administrator dapat mengelola user lain dan melihat Audit Log.</div>
+                        </div>
+                        <div class="col-md-6 mt-md-5">
+                            <div class="form-check form-switch mt-md-2">
+                                {{ form.is_active }}
+                                <label class="form-check-label ms-2 fw-medium" for="{{ form.is_active.id_for_label }}">Akun Aktif (Dapat Login)</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.password.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase mt-2">Password Baru</label>
+                            {{ form.password }}
+                            {% if form.password.help_text %}
+                                <div class="form-text small">{{ form.password.help_text }}</div>
+                            {% endif %}
+                            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.password_confirm.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase mt-2">Konfirmasi Password Baru</label>
+                            {{ form.password_confirm }}
+                            {% if form.password_confirm.errors %}<div class="text-danger small mt-1">{{ form.password_confirm.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mt-3 mb-0">{{ form.non_field_errors.0 }}</div>
+                    {% endif %}
+                </div>
             </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex justify-content-end gap-2 mb-5">
+                <a href="{% url 'arsip:user_list' %}" class="btn btn-light border px-4">Batal</a>
+                <button type="submit" class="btn btn-primary px-4 fw-bold">
+                    <i class="bi bi-save me-1"></i> Simpan Pengguna
+                </button>
+            </div>
+            
         </form>
     </div>
 </div>

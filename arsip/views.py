@@ -114,6 +114,28 @@ def kategori_toggle(request, id):
     messages.success(request, f'Kategori "{kategori.nama}" berhasil {status}.')
     return redirect('arsip:kategori_list')
 
+@login_required
+@require_POST
+def kategori_hapus(request, id):
+    kategori = get_object_or_404(Kategori, pk=id)
+    
+    jumlah_arsip = kategori.arsip.count()
+    if jumlah_arsip > 0:
+        messages.error(request, f'Kategori "{kategori.nama}" tidak dapat dihapus karena masih digunakan oleh {jumlah_arsip} arsip.')
+        return redirect('arsip:kategori_list')
+        
+    nama_kategori = kategori.nama
+    kategori.delete()
+    
+    AuditLog.objects.create(
+        user=request.user,
+        action="DELETE_CATEGORY",
+        description=f"Kategori dihapus: {nama_kategori}"
+    )
+    
+    messages.success(request, f'Kategori "{nama_kategori}" berhasil dihapus permanen.')
+    return redirect('arsip:kategori_list')
+
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 @login_required
@@ -148,6 +170,7 @@ def arsip_list(request):
             pass
             
     kategori_aktif = Kategori.objects.filter(aktif=True)
+    kategori_legacy = Kategori.objects.filter(aktif=False)
     
     paginator = Paginator(arsip_qs, 10)
     page_number = request.GET.get('page')
@@ -165,7 +188,8 @@ def arsip_list(request):
         'kategori_id': str(kategori_id),
         'tanggal_dari': tanggal_dari,
         'tanggal_sampai': tanggal_sampai,
-        'kategori_aktif': kategori_aktif
+        'kategori_aktif': kategori_aktif,
+        'kategori_legacy': kategori_legacy
     })
 
 @login_required

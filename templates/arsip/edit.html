@@ -1,253 +1,226 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card mt-4">
-            <div class="card-header">
-                <h4 class="mb-0">Edit Arsip</h4>
-            </div>
-            <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
-                        </div>
-                    {% endif %}
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.nama_warga.id_for_label }}" class="form-label">Nama Warga</label>
+<div class="mb-4">
+    <a href="{% url 'arsip:arsip_list' %}" class="text-decoration-none text-muted mb-2 d-inline-block"><i class="bi bi-arrow-left me-1"></i>Kembali ke Daftar Arsip</a>
+    <h4 class="fw-bold text-dark mb-1">EDIT ARSIP</h4>
+    <p class="text-muted small mb-0">Perbarui data arsip: <strong class="text-dark">{{ arsip.nama_file }}</strong></p>
+</div>
+
+<div class="row">
+    <div class="col-xl-8 col-lg-10">
+        <form method="post" enctype="multipart/form-data" id="formEditArsip">
+            {% csrf_token %}
+            
+            <!-- INFORMASI PEMILIK (Warga) -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-person-vcard me-2"></i>Data Pemilik Dokumen</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.nama_warga.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Nama Warga <span class="text-danger">*</span></label>
                             {{ form.nama_warga }}
                             {% if form.nama_warga.errors %}
-                                <div class="text-danger small mt-1">{{ form.nama_warga.errors|join:", " }}</div>
+                                <div class="text-danger small mt-1">{{ form.nama_warga.errors.0 }}</div>
                             {% endif %}
                         </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.nik.id_for_label }}" class="form-label">NIK</label>
+                        <div class="col-md-6">
+                            <label for="{{ form.nik.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Nomor Induk Kependudukan (NIK) <span class="text-danger">*</span></label>
                             {{ form.nik }}
                             {% if form.nik.errors %}
-                                <div class="text-danger small mt-1">{{ form.nik.errors|join:", " }}</div>
+                                <div class="text-danger small mt-1">{{ form.nik.errors.0 }}</div>
                             {% endif %}
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.kategori.id_for_label }}" class="form-label">Kategori</label>
-                        {{ form.kategori }}
-                        {% if form.kategori.errors %}
-                            <div class="text-danger small mt-1">{{ form.kategori.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.nama_file.id_for_label }}" class="form-label">Nama File</label>
-                        {{ form.nama_file }}
-                        {% if form.nama_file.errors %}
-                            <div class="text-danger small mt-1">{{ form.nama_file.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">File Dokumen Baru</label>
-                        {% if arsip.file %}
-                            <div class="mb-2">
-                                <a href="{{ arsip.file.url }}" target="_blank">Lihat File Saat Ini: {{ arsip.file.name }}</a>
-                            </div>
-                        {% endif %}
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-outline-primary w-100 py-3 fw-bold" id="btn_mode_foto" onclick="modeFoto()">📷 AMBIL GAMBAR</button>
-                        </div>
-                        
-                        <!-- CAMERA UI CONTAINER -->
-                        <div id="camera_container" class="mb-3 border rounded p-3 bg-light text-center" style="display:none;">
-                            <h5 class="mb-3">📷 Ambil Foto</h5>
-                            
-                            <video id="camera_video" class="w-100 bg-black rounded mb-2" autoplay playsinline style="max-height: 400px; object-fit: contain;"></video>
-                            <canvas id="camera_canvas" style="display:none;"></canvas>
-                            <img id="camera_preview" class="w-100 rounded mb-2" style="display:none; max-height: 400px; object-fit: contain;">
-                            
-                            <div id="camera_error" class="alert alert-warning small text-start" style="display:none;">
-                                Kamera tidak dapat digunakan. Silakan izinkan akses kamera atau pilih foto dari perangkat.
-                            </div>
-                            
-                            <div id="camera_controls">
-                                <button type="button" id="btn_capture" class="btn btn-primary" onclick="capturePhoto()">📸 Ambil Foto</button>
-                                <button type="button" class="btn btn-outline-danger ms-2" onclick="closeCamera()">Batal</button>
-                            </div>
-                            <div id="preview_controls" style="display:none;">
-                                <button type="button" class="btn btn-secondary me-2" onclick="retakePhoto()">🔄 Foto Ulang</button>
-                                <button type="button" class="btn btn-success" onclick="usePhoto()">✅ Gunakan Foto</button>
-                            </div>
-                        </div>
-
-                        <!-- DEFAULT FILE INPUT -->
-                        <div id="default_file_container" class="mb-3 border rounded p-3 bg-light">
-                            {{ form.file }}
-                            <div id="file_feedback" class="mt-2 text-success fw-bold" style="display:none;"></div>
-                            <small class="form-text text-muted d-block mt-2" id="help_text_arsip">Format yang didukung: JPG, JPEG, PNG, PDF, DOC, DOCX, XLS, XLSX, CSV (Maks 10MB). Biarkan kosong jika tidak ingin mengubah file.</small>
-                        </div>
-                        
-                        {% if form.file.errors %}
-                            <div class="text-danger small mt-1">{{ form.file.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.keterangan.id_for_label }}" class="form-label">Keterangan</label>
-                        {{ form.keterangan }}
-                        {% if form.keterangan.errors %}
-                            <div class="text-danger small mt-1">{{ form.keterangan.errors|join:", " }}</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'arsip:arsip_list' %}" class="btn btn-secondary" id="btn_batal">Batal</a>
-                        <button type="submit" class="btn btn-primary" id="btn_submit">Simpan Perubahan</button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>
+
+            <!-- INFORMASI DOKUMEN -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="m-0 fw-bold text-primary"><i class="bi bi-file-earmark-text me-2"></i>Detail Dokumen</h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.kategori.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Kategori Surat <span class="text-danger">*</span></label>
+                            {{ form.kategori }}
+                            {% if arsip.kategori %}
+                                {% if arsip.kategori.aktif %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small">
+                                            <i class="bi bi-check-circle me-1"></i>Kategori saat ini: MASTER RESMI
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1 small">
+                                            <i class="bi bi-clock-history me-1"></i>Kategori saat ini: LEGACY / HISTORIS
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            {% if form.kategori.errors %}
+                                <div class="text-danger small mt-1">{{ form.kategori.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.nama_file.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Judul / Nama Dokumen <span class="text-danger">*</span></label>
+                            {{ form.nama_file }}
+                            {% if form.nama_file.errors %}
+                                <div class="text-danger small mt-1">{{ form.nama_file.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="{{ form.keterangan.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Keterangan Tambahan <span class="text-muted fw-normal">(Opsional)</span></label>
+                            {{ form.keterangan }}
+                            {% if form.keterangan.errors %}
+                                <div class="text-danger small mt-1">{{ form.keterangan.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPLOAD FILE (Opsional for Edit) -->
+            <div class="card shadow-sm border-0 mb-4 bg-light">
+                <div class="card-header bg-light border-bottom py-3">
+                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-arrow-repeat me-2"></i>Ganti File Dokumen <span class="badge bg-secondary ms-2 fw-normal">Opsional</span></h6>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-secondary border-0 mb-4">
+                        <i class="bi bi-info-circle-fill me-2 text-secondary"></i> Biarkan kosong jika tidak ingin mengganti file yang sudah ada. 
+                        {% if arsip.file %}
+                            <br><small class="ms-4 mt-1 d-block">File tersimpan: <strong>{{ arsip.file.name|slice:"15:" }}</strong></small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.file.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Pilih File Pengganti (PDF/JPG/PNG)</label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                            <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="my-4 text-muted">
+                    
+                    <div class="mb-3">
+                        <label class="form-label d-block text-muted small fw-bold text-uppercase mb-3">Atau Gunakan Kamera</label>
+                        <button type="button" class="btn btn-outline-secondary mb-3 bg-white" id="btnBukaKamera">
+                            <i class="bi bi-camera me-1"></i> Buka Kamera
+                        </button>
+                        
+                        <div id="kameraContainer" class="d-none bg-white p-3 rounded border shadow-sm text-center">
+                            <video id="videoPreview" autoplay playsinline class="w-100 rounded mb-2 bg-dark" style="max-height: 400px; object-fit: contain;"></video>
+                            <canvas id="canvasCapture" class="d-none"></canvas>
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-primary" id="btnAmbilFoto">
+                                    <i class="bi bi-circle-fill me-1"></i> Ambil Foto
+                                </button>
+                                <button type="button" class="btn btn-danger" id="btnTutupKamera">
+                                    <i class="bi bi-x-circle me-1"></i> Tutup
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="hasilFotoContainer" class="d-none mt-3">
+                            <p class="text-success small fw-bold mb-2"><i class="bi bi-check-circle-fill me-1"></i>Foto berhasil diambil sebagai file pengganti.</p>
+                            <img id="imgHasilFoto" src="" alt="Hasil Foto" class="img-thumbnail shadow-sm" style="max-height: 200px;">
+                            <button type="button" class="btn btn-sm btn-outline-danger mt-2 d-block bg-white" id="btnHapusFoto">Batal / Hapus Foto</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="d-flex justify-content-end gap-2 mb-5">
+                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-light border px-4">Batal</a>
+                <button type="submit" class="btn btn-warning px-4 fw-bold text-dark" id="btnSimpan" onclick="disableBtn(this)">
+                    <i class="bi bi-save me-1"></i> Perbarui Arsip
+                </button>
+            </div>
+            
+        </form>
     </div>
 </div>
+
 <script>
-let stream = null;
-
-function startCamera() {
-    const video = document.getElementById('camera_video');
-    const errorMsg = document.getElementById('camera_error');
-    errorMsg.style.display = 'none';
-    
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } })
-            .then(function(s) {
-                stream = s;
-                video.srcObject = stream;
-                video.play();
-                video.style.display = 'block';
-                document.getElementById('camera_preview').style.display = 'none';
-                document.getElementById('camera_controls').style.display = 'block';
-                document.getElementById('preview_controls').style.display = 'none';
-            })
-            .catch(function(err) {
-                console.error("Camera error:", err);
-                errorMsg.innerText = "Izin kamera diperlukan untuk mengambil gambar.";
-                errorMsg.style.display = 'block';
-                video.style.display = 'none';
-            });
-    } else {
-        errorMsg.innerText = "Izin kamera diperlukan untuk mengambil gambar.";
-        errorMsg.style.display = 'block';
-        video.style.display = 'none';
-    }
-}
-
-function stopCamera() {
-    if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-    }
-}
-
-function capturePhoto() {
-    const video = document.getElementById('camera_video');
-    const canvas = document.getElementById('camera_canvas');
-    const preview = document.getElementById('camera_preview');
-    
-    if (!stream) return;
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    preview.src = canvas.toDataURL('image/jpeg', 0.9);
-    
-    video.style.display = 'none';
-    preview.style.display = 'block';
-    document.getElementById('camera_controls').style.display = 'none';
-    document.getElementById('preview_controls').style.display = 'block';
-    
-    const feedback = document.getElementById('file_feedback');
-    feedback.innerText = "Foto berhasil diambil.";
-    feedback.style.display = 'block';
-}
-
-function retakePhoto() {
-    const video = document.getElementById('camera_video');
-    const preview = document.getElementById('camera_preview');
-    
-    preview.style.display = 'none';
-    video.style.display = 'block';
-    document.getElementById('camera_controls').style.display = 'block';
-    document.getElementById('preview_controls').style.display = 'none';
-    
-    document.getElementById('file_feedback').style.display = 'none';
-}
-
-function modeFoto() {
-    document.getElementById('camera_container').style.display = 'block';
-    document.getElementById('btn_mode_foto').classList.replace('btn-outline-primary', 'btn-primary');
-    startCamera();
-}
-
-function closeCamera() {
-    stopCamera();
-    document.getElementById('camera_container').style.display = 'none';
-    document.getElementById('btn_mode_foto').classList.replace('btn-primary', 'btn-outline-primary');
-}
-
-function usePhoto() {
-    const canvas = document.getElementById('camera_canvas');
-    canvas.toBlob(function(blob) {
-        const file = new File([blob], "arsip_kamera_" + Date.now() + ".jpg", { type: "image/jpeg" });
-        const dt = new DataTransfer();
-        dt.items.add(file);
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnBukaKamera = document.getElementById('btnBukaKamera');
+        const btnTutupKamera = document.getElementById('btnTutupKamera');
+        const btnAmbilFoto = document.getElementById('btnAmbilFoto');
+        const btnHapusFoto = document.getElementById('btnHapusFoto');
+        const kameraContainer = document.getElementById('kameraContainer');
+        const hasilFotoContainer = document.getElementById('hasilFotoContainer');
+        const videoPreview = document.getElementById('videoPreview');
+        const canvasCapture = document.getElementById('canvasCapture');
+        const imgHasilFoto = document.getElementById('imgHasilFoto');
+        const fileInput = document.getElementById('{{ form.file.id_for_label }}');
         
-        const realInput = document.getElementById('{{ form.file.id_for_label }}');
-        realInput.files = dt.files;
-        
-        const feedback = document.getElementById('file_feedback');
-        feedback.innerText = "Foto siap digunakan.";
-        feedback.style.display = 'block';
-        
-        closeCamera();
-    }, 'image/jpeg', 0.9);
-}
+        let stream = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    const realInput = document.getElementById('{{ form.file.id_for_label }}');
-    const feedback = document.getElementById('file_feedback');
-    const form = document.querySelector('form');
-    const btnSubmit = document.getElementById('btn_submit');
-    const btnBatal = document.getElementById('btn_batal');
-    
-    if (realInput) {
-        realInput.style.display = 'block';
-        realInput.setAttribute('accept', '.jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx,.csv');
-        
-        realInput.addEventListener('change', function() {
-            if (this.files && this.files.length > 0) {
-                feedback.innerText = "File dipilih: " + this.files[0].name;
-                feedback.style.display = 'block';
-            } else {
-                feedback.style.display = 'none';
+        btnBukaKamera.addEventListener('click', async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                videoPreview.srcObject = stream;
+                kameraContainer.classList.remove('d-none');
+                btnBukaKamera.classList.add('d-none');
+            } catch (err) {
+                alert("Kamera tidak dapat diakses: " + err.message);
             }
         });
-    }
-    
-    form.addEventListener('submit', function(e) {
-        // Double submit protection and loading feedback
-        if (form.checkValidity()) {
-            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Menyimpan...';
-            btnSubmit.classList.add('disabled');
-            btnBatal.classList.add('disabled');
-            // Allow form submission to proceed
-        }
+
+        btnTutupKamera.addEventListener('click', function() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            kameraContainer.classList.add('d-none');
+            btnBukaKamera.classList.remove('d-none');
+        });
+
+        btnAmbilFoto.addEventListener('click', function() {
+            canvasCapture.width = videoPreview.videoWidth;
+            canvasCapture.height = videoPreview.videoHeight;
+            canvasCapture.getContext('2d').drawImage(videoPreview, 0, 0);
+            
+            canvasCapture.toBlob(function(blob) {
+                const file = new File([blob], "kamera_edit_" + Date.now() + ".jpg", { type: "image/jpeg" });
+                
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                imgHasilFoto.src = URL.createObjectURL(blob);
+                hasilFotoContainer.classList.remove('d-none');
+                
+                btnTutupKamera.click();
+            }, 'image/jpeg', 0.8);
+        });
+
+        btnHapusFoto.addEventListener('click', function() {
+            fileInput.value = '';
+            hasilFotoContainer.classList.add('d-none');
+            imgHasilFoto.src = '';
+        });
+        
+        fileInput.addEventListener('change', function() {
+            if(this.files.length > 0) {
+                hasilFotoContainer.classList.add('d-none');
+                imgHasilFoto.src = '';
+            }
+        });
     });
-});
+
+    function disableBtn(btn) {
+        if(document.getElementById('formEditArsip').checkValidity()){
+            setTimeout(() => {
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memperbarui...';
+                btn.disabled = true;
+            }, 50);
+        }
+    }
 </script>
 {% endblock %}
