@@ -31,10 +31,10 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light text-muted small text-uppercase">
                             <tr>
-                                <th class="ps-4 text-center" style="width: 10%;">No</th>
-                                <th style="width: 50%;">Nama Kategori</th>
-                                <th class="text-center" style="width: 20%;">Jumlah Arsip</th>
-                                <th class="text-center pe-4" style="width: 20%;">Aksi</th>
+                                <th scope="col" class="ps-4 text-center" style="width: 10%;">No</th>
+                                <th scope="col" style="width: 50%;">Nama Kategori</th>
+                                <th scope="col" class="text-center" style="width: 20%;">Jumlah Arsip</th>
+                                <th scope="col" class="text-center pe-4" style="width: 20%;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,11 +63,11 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-center pe-4">
-                                    <div class="btn-group shadow-sm" role="group">
-                                        <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Kategori">
+                                    <div class="btn-group shadow-sm" role="group" aria-label="Aksi Kategori {{ item.nama }}">
+                                        <a href="{% url 'arsip:kategori_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Kategori" aria-label="Edit Kategori {{ item.nama }}">
                                             <i class="bi bi-pencil text-warning"></i>
                                         </a>
-                                        <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteKategori{{ item.id }}" title="Hapus Kategori">
+                                        <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteKategori{{ item.id }}" title="Hapus Kategori" aria-label="Hapus Kategori {{ item.nama }}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </div>

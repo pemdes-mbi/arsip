@@ -185,9 +185,9 @@
         <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
         
         <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
+        <nav class="sidebar" id="sidebar" aria-label="Navigasi Utama">
             <div class="sidebar-brand">
-                <img src="{% static 'img/logo_kutim.png' %}" alt="Logo" class="mb-2" style="width: 75px; height: auto;">
+                <img src="{% static 'img/logo_kutim.png' %}" alt="Logo Pemerintah Desa Muara Bengkal Ilir" class="mb-2" style="width: 75px; height: auto;">
                 <h5>ARSIP DESA</h5>
                 <small>Muara Bengkal Ilir</small>
             </div>
@@ -244,7 +244,7 @@
             <!-- Topbar -->
             <header class="topbar">
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-light me-3 btn-sidebar-toggle" id="sidebarToggle">
+                    <button class="btn btn-light me-3 btn-sidebar-toggle" id="sidebarToggle" aria-label="Buka navigasi menu" title="Buka Menu Navigasi">
                         <i class="bi bi-list fs-5"></i>
                     </button>
                     <h5 class="mb-0 fw-bold text-dark d-none d-md-block">Sistem Informasi Arsip Desa</h5>
@@ -252,7 +252,7 @@
                 </div>
                 <div class="d-flex align-items-center">
                     <div class="dropdown">
-                        <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu pengguna: {{ user.username }}">
                             <i class="bi bi-person-circle fs-4 me-2 text-secondary"></i>
                             <span class="d-none d-md-inline fw-medium">{{ user.first_name|default:user.username }}</span>
                         </a>

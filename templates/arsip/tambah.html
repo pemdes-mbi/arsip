@@ -47,6 +47,7 @@
                         <div class="col-md-6">
                             <label for="{{ form.kategori.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Kategori Surat <span class="text-danger">*</span></label>
                             {{ form.kategori }}
+                            <div class="form-text small text-muted"><i class="bi bi-info-circle me-1"></i>Hanya Master Kategori Resmi Aktif yang dapat dipilih untuk arsip baru.</div>
                             {% if form.kategori.errors %}
                                 <div class="text-danger small mt-1">{{ form.kategori.errors.0 }}</div>
                             {% endif %}

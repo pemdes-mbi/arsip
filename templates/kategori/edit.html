@@ -17,6 +17,21 @@
                     <div class="mb-4">
                         <label for="{{ form.nama.id_for_label }}" class="form-label text-muted small fw-bold text-uppercase">Nama Kategori Dokumen <span class="text-danger">*</span></label>
                         {{ form.nama }}
+                        {% if kategori %}
+                            {% if kategori.aktif %}
+                                <div class="mt-2">
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1 small">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Status: MASTER RESMI (Aktif)
+                                    </span>
+                                </div>
+                            {% else %}
+                                <div class="mt-2">
+                                    <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1 small">
+                                        <i class="bi bi-clock-history me-1"></i>Status: LEGACY / HISTORIS (Nonaktif)
+                                    </span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
                         {% if form.nama.errors %}
                             <div class="text-danger small mt-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ form.nama.errors.0 }}</div>
                         {% endif %}

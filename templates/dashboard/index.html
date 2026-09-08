@@ -95,7 +95,16 @@
                         <tbody>
                             {% for kat in statistik_kategori %}
                             <tr>
-                                <td class="ps-4 fw-medium text-dark">{{ kat.nama }}</td>
+                                <td class="ps-4 fw-medium text-dark">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span>{{ kat.nama }}</span>
+                                        {% if kat.aktif %}
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-0 small" style="font-size: 0.68rem;">MASTER</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-0 small" style="font-size: 0.68rem;">LEGACY</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
                                 <td class="text-end pe-4"><span class="badge bg-secondary rounded-pill px-3">{{ kat.jumlah_arsip }}</span></td>
                             </tr>
                             {% empty %}
@@ -190,7 +199,18 @@
                                     <div class="fw-bold text-dark">{{ item.nama_warga }}</div>
                                     <div class="text-muted small">NIK: {{ item.nik }}</div>
                                 </td>
-                                <td><span class="badge bg-info bg-opacity-10 text-info border border-info rounded-pill px-2 py-1">{{ item.kategori.nama }}</span></td>
+                                <td>
+                                    <div class="fw-semibold text-dark mb-1">{{ item.kategori.nama }}</div>
+                                    {% if item.kategori.aktif %}
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                            <i class="bi bi-patch-check-fill me-1"></i>MASTER RESMI
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary border-opacity-25 rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                            <i class="bi bi-clock-history me-1"></i>LEGACY / HISTORIS
+                                        </span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <div class="text-truncate" style="max-width: 200px;" title="{{ item.nama_file }}">
                                         {{ item.nama_file }}
@@ -198,7 +218,7 @@
                                 </td>
                                 <td><span class="text-muted small"><i class="bi bi-calendar3 me-1"></i>{{ item.tanggal_upload|date:"d M Y" }}</span></td>
                                 <td class="text-center pe-4">
-                                    <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-light border text-primary" title="Lihat Detail">
+                                    <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-light border text-primary" title="Lihat Detail" aria-label="Lihat Detail Dokumen {{ item.nama_file }}">
                                         <i class="bi bi-eye"></i> Detail
                                     </a>
                                 </td>

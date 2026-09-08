@@ -51,8 +51,8 @@
                 <input type="date" class="form-control" name="tanggal_sampai" id="tanggal_sampai" value="{{ tanggal_sampai }}">
             </div>
             <div class="col-md-1 d-grid gap-2">
-                <button type="submit" class="btn btn-primary" title="Terapkan Filter"><i class="bi bi-funnel-fill"></i></button>
-                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-outline-secondary" title="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
+                <button type="submit" class="btn btn-primary" title="Terapkan Filter" aria-label="Terapkan Filter"><i class="bi bi-funnel-fill"></i></button>
+                <a href="{% url 'arsip:arsip_list' %}" class="btn btn-outline-secondary" title="Reset Filter" aria-label="Reset Filter"><i class="bi bi-arrow-counterclockwise"></i></a>
             </div>
         </form>
     </div>
@@ -65,12 +65,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light text-muted small text-uppercase">
                     <tr>
-                        <th class="ps-4 text-center" style="width: 5%;">No</th>
-                        <th style="width: 25%;">Identitas Pemilik</th>
-                        <th style="width: 15%;">Kategori</th>
-                        <th style="width: 25%;">Dokumen File</th>
-                        <th style="width: 15%;">Tgl. Upload</th>
-                        <th class="text-center pe-4" style="width: 15%;">Aksi</th>
+                        <th scope="col" class="ps-4 text-center" style="width: 5%;">No</th>
+                        <th scope="col" style="width: 25%;">Identitas Pemilik</th>
+                        <th scope="col" style="width: 15%;">Kategori</th>
+                        <th scope="col" style="width: 25%;">Dokumen File</th>
+                        <th scope="col" style="width: 15%;">Tgl. Upload</th>
+                        <th scope="col" class="text-center pe-4" style="width: 15%;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,14 +118,14 @@
                             </div>
                         </td>
                         <td class="text-center pe-4">
-                            <div class="btn-group shadow-sm" role="group">
-                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-light border" title="Detail Arsip">
+                            <div class="btn-group shadow-sm" role="group" aria-label="Aksi Dokumen {{ item.nama_file }}">
+                                <a href="{% url 'arsip:arsip_detail' item.id %}" class="btn btn-sm btn-light border" title="Detail Arsip" aria-label="Detail Dokumen {{ item.nama_file }}">
                                     <i class="bi bi-eye text-primary"></i>
                                 </a>
-                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Arsip">
+                                <a href="{% url 'arsip:arsip_edit' item.id %}" class="btn btn-sm btn-light border" title="Edit Arsip" aria-label="Edit Dokumen {{ item.nama_file }}">
                                     <i class="bi bi-pencil text-warning"></i>
                                 </a>
-                                <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}" title="Hapus Arsip">
+                                <button type="button" class="btn btn-sm btn-light border text-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ item.id }}" title="Hapus Arsip" aria-label="Hapus Dokumen {{ item.nama_file }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
