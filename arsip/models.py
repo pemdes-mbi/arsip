@@ -68,7 +68,7 @@ def log_user_login(sender, request, user, **kwargs):
         action="LOGIN",
         description="User berhasil login."
     )
-    if request:
+    if request and hasattr(request, '_messages'):
         messages.success(request, 'Login berhasil.')
 
 @receiver(user_logged_out)
@@ -79,5 +79,5 @@ def log_user_logout(sender, request, user, **kwargs):
             action="LOGOUT",
             description="User logout."
         )
-    if request:
+    if request and hasattr(request, '_messages'):
         messages.success(request, 'Anda telah logout.')

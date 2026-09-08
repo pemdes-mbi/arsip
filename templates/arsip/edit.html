@@ -93,7 +93,11 @@
                     <div class="alert alert-secondary border-0 mb-4">
                         <i class="bi bi-info-circle-fill me-2 text-secondary"></i> Biarkan kosong jika tidak ingin mengganti file yang sudah ada. 
                         {% if arsip.file %}
-                            <br><small class="ms-4 mt-1 d-block">File tersimpan: <strong>{{ arsip.file.name|slice:"15:" }}</strong></small>
+                            {% if file_exists %}
+                                <br><small class="ms-4 mt-1 d-block">File tersimpan: <strong>{{ arsip.file.name|slice:"15:" }}</strong></small>
+                            {% else %}
+                                <br><small class="ms-4 mt-1 d-block text-warning"><i class="bi bi-exclamation-triangle-fill me-1"></i>File terdaftar ({{ arsip.file.name|slice:"15:" }}), namun berkas fisik tidak ditemukan di server lokal. Anda dapat mengunggah file pengganti.</small>
+                            {% endif %}
                         {% else %}
                             <br><small class="ms-4 mt-1 d-block text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Dokumen ini saat ini belum/tidak memiliki file fisik di server lokal.</small>
                         {% endif %}

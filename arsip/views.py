@@ -217,7 +217,8 @@ def arsip_tambah(request):
                     
                     messages.success(request, 'Arsip berhasil disimpan dan diupload ke Google Drive.')
                 except Exception as e:
-                    messages.warning(request, f'Arsip berhasil disimpan, tetapi upload ke Google Drive gagal. Error: {str(e)}')
+                    # Logging/handling tanpa membocorkan URL Google Apps Script atau secret ke pesan pengguna
+                    messages.warning(request, 'Arsip berhasil disimpan secara lokal, namun sinkronisasi ke Google Drive mengalami kendala jaringan atau layanan.')
             else:
                 messages.success(request, 'Arsip berhasil ditambahkan.')
                 
@@ -266,6 +267,16 @@ def arsip_detail(request, id):
 @login_required
 def arsip_edit(request, id):
     arsip = get_object_or_404(Arsip, pk=id)
+    
+    file_exists = False
+    if arsip.file:
+        import os
+        try:
+            if os.path.exists(arsip.file.path):
+                file_exists = True
+        except Exception:
+            file_exists = False
+
     if request.method == 'POST':
         form = ArsipForm(request.POST, request.FILES, instance=arsip)
         if form.is_valid():
@@ -289,7 +300,8 @@ def arsip_edit(request, id):
                     
                     messages.success(request, 'Arsip berhasil diperbarui dan file baru diupload ke Google Drive.')
                 except Exception as e:
-                    messages.warning(request, f'Arsip berhasil diperbarui, tetapi file baru gagal diupload ke Google Drive. Error: {str(e)}')
+                    # Logging/handling tanpa membocorkan URL Google Apps Script atau secret ke pesan pengguna
+                    messages.warning(request, 'Arsip berhasil diperbarui secara lokal, namun file baru gagal diupload ke Google Drive karena kendala jaringan atau layanan.')
             else:
                 messages.success(request, 'Arsip berhasil diperbarui.')
                 
@@ -305,7 +317,8 @@ def arsip_edit(request, id):
     
     return render(request, 'arsip/edit.html', {
         'form': form,
-        'arsip': arsip
+        'arsip': arsip,
+        'file_exists': file_exists
     })
 
 import os
