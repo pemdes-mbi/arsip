@@ -10,3 +10,9 @@ staticfiles/
 backups/
 test_media/
 test_db.sqlite3
+
+# Certificates and keys
+*.pem
+*.key
+*.crt
+*.cert
