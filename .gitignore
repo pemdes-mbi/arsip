@@ -4,6 +4,7 @@ __pycache__/
 .env
 db.sqlite3
 credentials/
+credentials.json
 media/
 staticfiles/
 
