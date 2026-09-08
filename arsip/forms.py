@@ -1,6 +1,7 @@
 import os
 from django import forms
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from .models import Kategori, Arsip
 
 class KategoriForm(forms.ModelForm):
@@ -46,55 +47,123 @@ class ArsipForm(forms.ModelForm):
         else:
             self.fields['file'].required = False
 
+    def clean_kategori(self):
+        kategori = self.cleaned_data.get('kategori')
+        if not kategori:
+            raise ValidationError('Kategori surat wajib dipilih.')
+        
+        if not self.instance.pk:
+            # Form Tambah (Arsip Baru): Hanya kategori Master Resmi Aktif yang diizinkan
+            if not kategori.aktif:
+                raise ValidationError('Kategori legacy/nonaktif tidak dapat digunakan untuk arsip baru. Pilih Master Kategori Resmi.')
+        else:
+            # Form Edit: Kategori existing boleh dipertahankan (meskipun legacy)
+            # Namun jika diubah ke kategori lain, kategori tujuan harus aktif
+            if kategori.pk != self.instance.kategori_id and not kategori.aktif:
+                raise ValidationError('Tidak dapat mengubah ke kategori legacy/nonaktif. Pilih Master Kategori Resmi yang aktif.')
+                
+        return kategori
+
+    def clean_nik(self):
+        nik = self.cleaned_data.get('nik', '').strip()
+        if not nik:
+            raise ValidationError('Nomor Induk Kependudukan (NIK) wajib diisi.')
+        
+        # Jika arsip existing dan NIK tidak diubah, izinkan format lama (legacy) tetap utuh
+        if self.instance and self.instance.pk and nik == self.instance.nik:
+            return nik
+
+        # Untuk data baru atau jika NIK diubah: wajib 16 digit angka
+        if not nik.isdigit():
+            raise ValidationError('NIK hanya boleh terdiri dari digit angka (0-9).')
+        if len(nik) != 16:
+            raise ValidationError('NIK harus tepat 16 digit angka.')
+            
+        return nik
+
+    def clean_nama_warga(self):
+        nama = self.cleaned_data.get('nama_warga', '').strip()
+        if not nama:
+            raise ValidationError('Nama warga wajib diisi.')
+        if len(nama) > 150:
+            raise ValidationError('Nama warga maksimal 150 karakter.')
+        return nama
+
+    def clean_nama_file(self):
+        nama_file = self.cleaned_data.get('nama_file', '').strip()
+        if not nama_file:
+            raise ValidationError('Judul / nama dokumen wajib diisi.')
+        if len(nama_file) > 255:
+            raise ValidationError('Judul / nama dokumen maksimal 255 karakter.')
+        # Path traversal protection
+        if '..' in nama_file or '/' in nama_file or '\\' in nama_file:
+            raise ValidationError('Judul dokumen tidak boleh mengandung karakter path traversal (../, /, \\).')
+        return nama_file
+
+    def clean_keterangan(self):
+        keterangan = self.cleaned_data.get('keterangan', '')
+        if keterangan:
+            keterangan = keterangan.strip()
+        return keterangan
+
     def clean_file(self):
         file = self.cleaned_data.get('file')
-        if file:
+        # Hanya jalankan validasi mendalam jika user mengunggah file baru (UploadedFile)
+        # Jangan memvalidasi ulang FieldFile existing saat Edit jika tidak ada file baru diunggah
+        if file and isinstance(file, UploadedFile):
             # 1. Path traversal protection & normalize filename
             basename = os.path.basename(file.name)
             if '..' in basename or '/' in basename or '\\' in basename:
                 raise ValidationError('Nama file tidak valid (indikasi path traversal).')
             
             # 2. Extract and validate extension
-            # Ensure it captures the very last extension to prevent double extensions (e.g. file.pdf.exe)
             ext = os.path.splitext(basename)[1].lower()
             valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']
             
-            # Executable protection (also caught by valid_extensions but explicit is better)
-            invalid_extensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.py', '.js', '.dll', '.msi', '.scr']
+            # Executable & script protection
+            invalid_extensions = [
+                '.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.py', '.js',
+                '.dll', '.msi', '.scr', '.vbs', '.html', '.htm', '.svg'
+            ]
             if ext in invalid_extensions:
-                 raise ValidationError('File executable tidak diperbolehkan.')
+                 raise ValidationError('File executable / script berbahaya tidak diperbolehkan.')
                  
             if ext not in valid_extensions:
                 raise ValidationError('Hanya file gambar (JPG/PNG) atau dokumen (PDF/Word/Excel/CSV) yang diperbolehkan.')
             
+            # Double extension protection (e.g. file.exe.pdf or file.php.jpg)
+            parts = basename.lower().split('.')
+            if len(parts) > 2:
+                for part in parts[1:-1]:
+                    if f".{part}" in invalid_extensions or part in ['exe', 'bat', 'cmd', 'sh', 'ps1', 'php', 'py', 'js', 'dll', 'msi', 'scr', 'vbs', 'html', 'htm']:
+                        raise ValidationError('Nama file mengandung ekstensi ganda berbahaya (double extension).')
+
             # 3. File size validation (10MB limit)
             if file.size > 10 * 1024 * 1024:
                 raise ValidationError('Ukuran file maksimal adalah 10MB.')
                 
             # 4. Content / Signature validation (Magic Numbers)
-            # We don't blindly trust the content_type from the client.
-            # We check the first few bytes for common formats to prevent fake files.
             try:
-                # Read first 8 bytes for signature checking
                 header = file.read(8)
                 file.seek(0) # Reset pointer so save/upload works later
                 
-                if ext == '.pdf' and not header.startswith(b'%PDF'):
-                    raise ValidationError('Isi file tidak sesuai dengan ekstensi PDF (File Palsu atau Rusak).')
+                if ext == '.pdf':
+                    if not header.startswith(b'%PDF'):
+                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PDF (Magic number tidak valid).')
                 elif ext in ['.jpg', '.jpeg']:
                     # JPEG starts with FF D8
                     if not header.startswith(b'\xff\xd8'):
-                        raise ValidationError('Isi file tidak sesuai dengan ekstensi JPG/JPEG.')
+                        raise ValidationError('Isi file tidak sesuai dengan ekstensi JPG/JPEG (Magic number tidak valid).')
                 elif ext == '.png':
                     # PNG starts with 89 50 4E 47 0D 0A 1A 0A
                     if not header.startswith(b'\x89PNG\r\n\x1a\n'):
-                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PNG.')
-                # For DOC/DOCX/XLS/XLSX/CSV, we rely on the extension as signature checking is complex 
-                # (e.g. DOCX is a ZIP file starting with PK), and it's acceptable per Tahap 34 constraints.
+                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PNG (Magic number tidak valid).')
+            except ValidationError:
+                raise
             except Exception as e:
                 raise ValidationError(f'Gagal memvalidasi isi file: {str(e)}')
                 
-            # Update the file name to the safe basename just in case
+            # Update the file name to the safe basename
             file.name = basename
             
         return file

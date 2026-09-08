@@ -55,7 +55,13 @@
                     </li>
                     <li class="list-group-item px-0 py-3">
                         <small class="text-muted text-uppercase fw-bold d-block mb-1">Keterangan</small>
-                        <div class="text-dark">{{ arsip.keterangan|default:"<em class='text-muted'>Tidak ada keterangan tambahan.</em>"|safe }}</div>
+                        <div class="text-dark">
+                            {% if arsip.keterangan %}
+                                {{ arsip.keterangan|linebreaksbr }}
+                            {% else %}
+                                <em class="text-muted">Tidak ada keterangan tambahan.</em>
+                            {% endif %}
+                        </div>
                     </li>
                     <li class="list-group-item px-0 pt-3 pb-0 border-bottom-0">
                         <small class="text-muted text-uppercase fw-bold d-block mb-1">Metadata Sistem</small>
