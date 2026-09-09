@@ -11,6 +11,11 @@ staticfiles/
 backups/
 test_media/
 test_db.sqlite3
+temp_restore/
+*.bak
+*.backup
+*.dump
+
 
 # Certificates and keys
 *.pem
