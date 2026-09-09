@@ -43,12 +43,14 @@ if not DEBUG:
         raise ValueError("Wildcard '*' tidak diperkenankan pada DJANGO_ALLOWED_HOSTS saat mode produksi.")
 
 SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_COOKIE_SECURE', 'False').strip().lower() in ('true', '1')
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = os.environ.get('DJANGO_SESSION_COOKIE_HTTPONLY', 'True').strip().lower() in ('true', '1')
+SESSION_COOKIE_SAMESITE = os.environ.get('DJANGO_SESSION_COOKIE_SAMESITE', 'Lax')
+SESSION_COOKIE_AGE = int(os.environ.get('DJANGO_SESSION_COOKIE_AGE', 1209600))
+SESSION_EXPIRE_AT_BROWSER_CLOSE = os.environ.get('DJANGO_SESSION_EXPIRE_AT_BROWSER_CLOSE', 'False').strip().lower() in ('true', '1')
 
 CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_COOKIE_SECURE', 'False').strip().lower() in ('true', '1')
-CSRF_COOKIE_HTTPONLY = False
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_HTTPONLY = os.environ.get('DJANGO_CSRF_COOKIE_HTTPONLY', 'False').strip().lower() in ('true', '1')
+CSRF_COOKIE_SAMESITE = os.environ.get('DJANGO_CSRF_COOKIE_SAMESITE', 'Lax')
 
 SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False').strip().lower() in ('true', '1')
 
