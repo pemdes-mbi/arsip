@@ -1,16 +1,19 @@
+import logging
+import csv
+from datetime import datetime
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.db.models import Q
-from .models import Kategori, Arsip, AuditLog
-from .forms import KategoriForm, ArsipForm
+from django.db.models import Q, Count
 from django.conf import settings
 from django.utils import timezone
-from django.db.models import Count
-import csv
 from django.http import HttpResponse
-from datetime import datetime
+from .models import Kategori, Arsip, AuditLog
+from .forms import KategoriForm, ArsipForm
+
+logger = logging.getLogger('arsip.views')
+
 @login_required
 def dashboard(request):
     total_arsip = Arsip.objects.count()
@@ -121,12 +124,14 @@ def kategori_hapus(request, id):
     
     jumlah_arsip = kategori.arsip.count()
     if jumlah_arsip > 0:
+        logger.warning("Attempted deletion of category ID %s ('%s') blocked: %s active archives exist.", id, kategori.nama, jumlah_arsip)
         messages.error(request, f'Kategori "{kategori.nama}" tidak dapat dihapus karena masih digunakan oleh {jumlah_arsip} arsip.')
         return redirect('arsip:kategori_list')
         
     nama_kategori = kategori.nama
     kategori.delete()
     
+    logger.info("Category ID %s ('%s') deleted permanently by user '%s'.", id, nama_kategori, request.user.username)
     AuditLog.objects.create(
         user=request.user,
         action="DELETE_CATEGORY",
@@ -135,6 +140,7 @@ def kategori_hapus(request, id):
     
     messages.success(request, f'Kategori "{nama_kategori}" berhasil dihapus permanen.')
     return redirect('arsip:kategori_list')
+
 
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -215,11 +221,14 @@ def arsip_tambah(request):
                     arsip.drive_file_id = drive_response['file_id']
                     arsip.save(update_fields=['drive_file_id'])
                     
+                    logger.info("Archive ID %s created and synchronized to Google Drive.", arsip.id)
                     messages.success(request, 'Arsip berhasil disimpan dan diupload ke Google Drive.')
                 except Exception as e:
                     # Logging/handling tanpa membocorkan URL Google Apps Script atau secret ke pesan pengguna
+                    logger.error("Google Drive sync failed during archive creation (ID %s): %s", arsip.id, str(e))
                     messages.warning(request, 'Arsip berhasil disimpan secara lokal, namun sinkronisasi ke Google Drive mengalami kendala jaringan atau layanan.')
             else:
+                logger.info("Archive ID %s created locally without file.", arsip.id)
                 messages.success(request, 'Arsip berhasil ditambahkan.')
                 
             AuditLog.objects.create(
@@ -229,10 +238,13 @@ def arsip_tambah(request):
             )
                 
             return redirect('arsip:arsip_list')
+        else:
+            logger.warning("Archive creation form validation failed. Invalid fields: %s", list(form.errors.keys()))
     else:
         form = ArsipForm()
     
     return render(request, 'arsip/tambah.html', {'form': form})
+
 
 @login_required
 def arsip_detail(request, id):
@@ -298,11 +310,14 @@ def arsip_edit(request, id):
                     arsip.drive_file_id = drive_response['file_id']
                     arsip.save(update_fields=['drive_file_id'])
                     
+                    logger.info("Archive ID %s updated with new file and synchronized to Google Drive.", arsip.id)
                     messages.success(request, 'Arsip berhasil diperbarui dan file baru diupload ke Google Drive.')
                 except Exception as e:
                     # Logging/handling tanpa membocorkan URL Google Apps Script atau secret ke pesan pengguna
+                    logger.error("Google Drive sync failed during archive update (ID %s): %s", arsip.id, str(e))
                     messages.warning(request, 'Arsip berhasil diperbarui secara lokal, namun file baru gagal diupload ke Google Drive karena kendala jaringan atau layanan.')
             else:
+                logger.info("Archive metadata ID %s updated without file change.", arsip.id)
                 messages.success(request, 'Arsip berhasil diperbarui.')
                 
             AuditLog.objects.create(
@@ -312,6 +327,8 @@ def arsip_edit(request, id):
             )
                 
             return redirect('arsip:arsip_list')
+        else:
+            logger.warning("Archive edit form validation failed for ID %s. Invalid fields: %s", id, list(form.errors.keys()))
     else:
         form = ArsipForm(instance=arsip)
     
@@ -333,8 +350,9 @@ def arsip_hapus(request, id):
         try:
             if os.path.exists(arsip.file.path):
                 os.remove(arsip.file.path)
-        except Exception:
-            pass
+                logger.info("Local file removed for archive ID %s.", id)
+        except Exception as e:
+            logger.warning("Failed to remove local file for archive ID %s: %s", id, str(e))
             
     # Hapus record database (file Google Drive dipertahankan)
     AuditLog.objects.create(
@@ -343,9 +361,11 @@ def arsip_hapus(request, id):
         description=f"Arsip ID {arsip.id} dihapus. Warga: {arsip.nama_warga}, File: {arsip.nama_file}"
     )
     arsip.delete()
+    logger.info("Archive ID %s deleted from database by user '%s'.", id, request.user.username)
     
     messages.success(request, 'Arsip berhasil dihapus dari sistem.')
     return redirect('arsip:arsip_list')
+
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import user_passes_test
@@ -371,6 +391,7 @@ def user_add(request):
             user.is_superuser = (form.cleaned_data['role'] == 'admin')
             user.is_staff = user.is_superuser
             user.save()
+            logger.info("New user created: '%s' (role: %s) by admin '%s'.", user.username, form.cleaned_data['role'], request.user.username)
             AuditLog.objects.create(
                 user=request.user,
                 action="CREATE_USER",
@@ -378,6 +399,8 @@ def user_add(request):
             )
             messages.success(request, 'User berhasil dibuat.')
             return redirect('arsip:user_list')
+        else:
+            logger.warning("User creation form validation failed. Invalid fields: %s", list(form.errors.keys()))
     else:
         form = UserAddForm()
     return render(request, 'arsip/user_form.html', {'form': form, 'title': 'Tambah User'})
@@ -396,6 +419,7 @@ def user_edit(request, id):
             user.is_superuser = (form.cleaned_data['role'] == 'admin')
             user.is_staff = user.is_superuser
             user.save()
+            logger.info("User '%s' (ID %s) updated by admin '%s'.", user.username, id, request.user.username)
             AuditLog.objects.create(
                 user=request.user,
                 action="UPDATE_USER",
@@ -403,6 +427,8 @@ def user_edit(request, id):
             )
             messages.success(request, 'User berhasil diperbarui.')
             return redirect('arsip:user_list')
+        else:
+            logger.warning("User edit form validation failed for ID %s. Invalid fields: %s", id, list(form.errors.keys()))
     else:
         form = UserEditForm(instance=user_obj)
     return render(request, 'arsip/user_form.html', {'form': form, 'title': 'Edit User', 'user_obj': user_obj})
@@ -417,6 +443,7 @@ def user_toggle(request, id):
     if user_obj.is_superuser and user_obj.is_active:
         active_admins = User.objects.filter(is_superuser=True, is_active=True).count()
         if active_admins <= 1:
+            logger.warning("Attempt to deactivate last active admin ('%s') blocked.", user_obj.username)
             messages.error(request, 'Gagal menonaktifkan. Sistem harus memiliki setidaknya satu admin aktif.')
             return redirect('arsip:user_list')
             
@@ -424,6 +451,7 @@ def user_toggle(request, id):
     user_obj.save()
     status = 'diaktifkan' if user_obj.is_active else 'dinonaktifkan'
     action_type = "ACTIVATE_USER" if user_obj.is_active else "DEACTIVATE_USER"
+    logger.info("User '%s' (ID %s) status toggled to %s by admin '%s'.", user_obj.username, id, status, request.user.username)
     AuditLog.objects.create(
         user=request.user,
         action=action_type,
@@ -548,6 +576,7 @@ def arsip_export_csv(request):
             sanitize(item.drive_file_id)
         ])
         
+    logger.info("Archive CSV report exported by '%s' (%s records).", request.user.username, arsip_qs.count())
     AuditLog.objects.create(
         user=request.user,
         action="EXPORT_LAPORAN",

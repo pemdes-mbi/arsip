@@ -17,3 +17,8 @@ test_db.sqlite3
 *.key
 *.crt
 *.cert
+
+# Logs
+*.log
+logs/
+
