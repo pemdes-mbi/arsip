@@ -111,62 +111,98 @@ class ArsipForm(forms.ModelForm):
         # Hanya jalankan validasi mendalam jika user mengunggah file baru (UploadedFile)
         # Jangan memvalidasi ulang FieldFile existing saat Edit jika tidak ada file baru diunggah
         if file and isinstance(file, UploadedFile):
-            # 1. Path traversal protection & normalize filename
-            basename = os.path.basename(file.name)
-            if '..' in basename or '/' in basename or '\\' in basename:
-                raise ValidationError('Nama file tidak valid (indikasi path traversal).')
+            # 1. Reject empty file (0 byte)
+            if file.size == 0:
+                raise ValidationError('File tidak boleh kosong (0 byte).')
+
+            # 2. File size limit validation
+            from django.conf import settings
+            max_size_mb = getattr(settings, 'MAX_UPLOAD_SIZE_MB', 10)
+            max_size_bytes = max_size_mb * 1024 * 1024
+            if file.size > max_size_bytes:
+                raise ValidationError(f'Ukuran file melebihi batas maksimal ({max_size_mb}MB).')
+
+            # 3. Path traversal & filename safety
+            raw_filename = file.name or ''
+            if '..' in raw_filename or '/' in raw_filename or '\\' in raw_filename:
+                raise ValidationError('Nama file tidak valid atau mengandung path traversal (../, /, \\).')
             
-            # 2. Extract and validate extension
-            ext = os.path.splitext(basename)[1].lower()
-            valid_extensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.csv']
-            
+            basename = os.path.basename(raw_filename).strip()
+            if not basename:
+                raise ValidationError('Nama file tidak valid.')
+
+            # 4. Extension & double extension validation (case-insensitive)
+            parts = [p.lower() for p in basename.split('.') if p]
+            if len(parts) < 2:
+                raise ValidationError('File harus memiliki ekstensi yang valid.')
+
+            ext = f".{parts[-1]}"
+            valid_extensions = ['.pdf', '.jpg', '.jpeg', '.png']
+            dangerous_extensions = {
+                'exe', 'bat', 'cmd', 'sh', 'ps1', 'php', 'phtml', 'py', 'js',
+                'dll', 'msi', 'scr', 'vbs', 'html', 'htm', 'svg', 'cgi', 'asp',
+                'aspx', 'jsp', 'jar', 'war', 'com', 'bin'
+            }
+
             # Executable & script protection
-            invalid_extensions = [
-                '.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.py', '.js',
-                '.dll', '.msi', '.scr', '.vbs', '.html', '.htm', '.svg'
-            ]
-            if ext in invalid_extensions:
-                 raise ValidationError('File executable / script berbahaya tidak diperbolehkan.')
-                 
+            if parts[-1] in dangerous_extensions:
+                raise ValidationError('File executable / script berbahaya tidak diperbolehkan.')
+
             if ext not in valid_extensions:
-                raise ValidationError('Hanya file gambar (JPG/PNG) atau dokumen (PDF/Word/Excel/CSV) yang diperbolehkan.')
-            
-            # Double extension protection (e.g. file.exe.pdf or file.php.jpg)
-            parts = basename.lower().split('.')
+                raise ValidationError('Tipe file tidak diizinkan. Hanya file PDF, JPG, JPEG, dan PNG yang diperbolehkan.')
+
+            # Double extension protection
             if len(parts) > 2:
-                for part in parts[1:-1]:
-                    if f".{part}" in invalid_extensions or part in ['exe', 'bat', 'cmd', 'sh', 'ps1', 'php', 'py', 'js', 'dll', 'msi', 'scr', 'vbs', 'html', 'htm']:
+                for mid_part in parts[1:-1]:
+                    if mid_part in dangerous_extensions:
                         raise ValidationError('Nama file mengandung ekstensi ganda berbahaya (double extension).')
 
-            # 3. File size validation (10MB limit)
-            if file.size > 10 * 1024 * 1024:
-                raise ValidationError('Ukuran file maksimal adalah 10MB.')
-                
-            # 4. Content / Signature validation (Magic Numbers)
+            # 5. Content & Magic Bytes / Signature validation
             try:
-                header = file.read(8)
-                file.seek(0) # Reset pointer so save/upload works later
-                
+                header = file.read(16)
+                file.seek(0)  # Reset pointer so subsequent reads work
+
                 if ext == '.pdf':
                     if not header.startswith(b'%PDF'):
-                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PDF (Magic number tidak valid).')
+                        raise ValidationError('Isi file tidak sesuai dengan format PDF (Magic bytes tidak valid).')
                 elif ext in ['.jpg', '.jpeg']:
-                    # JPEG starts with FF D8
                     if not header.startswith(b'\xff\xd8'):
-                        raise ValidationError('Isi file tidak sesuai dengan ekstensi JPG/JPEG (Magic number tidak valid).')
+                        raise ValidationError('Isi file tidak sesuai dengan format JPG/JPEG (Magic bytes tidak valid).')
+                    try:
+                        from PIL import Image
+                        img = Image.open(file)
+                        img.verify()
+                        file.seek(0)
+                        if img.format not in ['JPEG', 'MPO']:
+                            raise ValidationError('Format gambar bukan JPEG yang valid.')
+                    except ValidationError:
+                        raise
+                    except Exception:
+                        raise ValidationError('File gambar JPG/JPEG rusak atau format tidak valid.')
                 elif ext == '.png':
-                    # PNG starts with 89 50 4E 47 0D 0A 1A 0A
                     if not header.startswith(b'\x89PNG\r\n\x1a\n'):
-                        raise ValidationError('Isi file tidak sesuai dengan ekstensi PNG (Magic number tidak valid).')
+                        raise ValidationError('Isi file tidak sesuai dengan format PNG (Magic bytes tidak valid).')
+                    try:
+                        from PIL import Image
+                        img = Image.open(file)
+                        img.verify()
+                        file.seek(0)
+                        if img.format != 'PNG':
+                            raise ValidationError('Format gambar bukan PNG yang valid.')
+                    except ValidationError:
+                        raise
+                    except Exception:
+                        raise ValidationError('File gambar PNG rusak atau format tidak valid.')
             except ValidationError:
                 raise
             except Exception as e:
                 raise ValidationError(f'Gagal memvalidasi isi file: {str(e)}')
-                
+
             # Update the file name to the safe basename
             file.name = basename
-            
+
         return file
+
 
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
